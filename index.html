@@ -11,7 +11,7 @@
 <body>
 
     <script>
-    //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
+    //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
     var config = {
         type: Phaser.AUTO,
         width: 1280,
@@ -46,6 +46,8 @@
         constructor(scene, x, y)
         {
             super(scene, x, y, 'slug');
+            this.hp = 1;
+            this.scene.physics.add.overlap(arrows, this, this.takeDamage, null, this); // Make the arrow despawn slugs
             scene.add.existing(this);
             scene.physics.add.existing(this);
             this.setScale(0.4);
@@ -58,6 +60,16 @@
             scene.tweens.add({ targets: this, x: xDist, y: yDist, duration: time, ease: 'Linear', repeat: -1, yoyo: true });
         }
 
+        takeDamage(myArrow, me)
+        {
+            reverseDespawn(myArrow, me);
+            this.hp--;
+            if (this.hp < 0)
+            {
+                despawn(this, this);
+            }
+        }
+
         pathfind()
         {
 
@@ -66,14 +78,39 @@
 
     class WingSlug extends Slug
     {
+          fire(myScene, obj)
+          {
+              if (obj.active)
+              {
+                  let myVector = new Phaser.Math.Vector2();
+                  myVector.x = player.x - obj.x;
+                  myVector.y = player.y - obj.y;
+                  myVector.normalize();
+                  myVector.x += Phaser.Math.Between(-2, 2) / 10;
+                  myVector.y += Phaser.Math.Between(-2, 2) / 10;
+                  myVector.normalize();
+
+                  let mySlime = new Slime(myScene, obj.x, obj.y, myVector.x * 300, myVector.y * 300);
+                  bullets.push(mySlime);
+              }
+          }
+
           constructor(scene, x, y)
           {
              super(scene, x, y, 'wingslug');
              scene.add.existing(this);
              scene.physics.add.existing(this);
-             this.setScale(0.4);
+             this.setScale(0.25);
              this.setCollideWorldBounds(true);
              this.setGravityY(3000);
+
+             var timer = scene.time.addEvent({
+                  delay: 300,
+                  callback: this.fire,
+                  args: [scene, this],
+                  callbackScope: scene,
+                  loop: true
+              });
           }
 
           pathfind()
@@ -123,7 +160,7 @@
             super(scene, x, y, 'slime');
             scene.add.existing(this);
             scene.physics.add.existing(this);
-            this.setScale(1);
+            this.setScale(0.02);
             this.setCollideWorldBounds(false);
             this.setVelocity(xSpeed, ySpeed);
         }
@@ -153,6 +190,8 @@
     var currentJumps = MAX_JUMP_COUNT;
 
     var slugs = [];
+    var arrows = [];
+    var bullets = [];
     var wingSlugs = [];
 
     function preload()
@@ -163,12 +202,12 @@
         this.load.image('slug', 'assets/slug.png');
         this.load.image('wingslug', 'assets/slug.png');
         this.load.image('arrow', 'assets/arrow.png');
-        this.load.image('bullet', 'assets/bullet.png')
+        this.load.image('slime', 'assets/slime.png');
     }
 
     function despawn(despawner, despawnee)
     {
-        despawnee.disableBody(true, true); //remove that particular carrot from the game (physics and visibility)
+        despawnee.disableBody(true, true); //remove that particuhp--;
     }
 
     function reverseDespawn(despawnee, despawner)
@@ -190,13 +229,27 @@
         if (!hitCooldown)
         {
             hitCooldown = true;
-            this.time.delayedCall(1000, resetHitCooldown, [], this); // Make cooldown stop in 1 second
-            hp--;
-            if (hp <= 0)
-            {
-              console.log("L");
-            }
+            this.time.delayedCall(500, resetHitCooldown, [], this); // Make cooldown stop in 1 second
+            TakeDamage(1);
         }
+    }
+
+    function CollisionDeleter(myPlayer, myEnemy)
+    {
+        if (!hitCooldown)
+        {
+            despawn(this, myEnemy);
+            hitCooldown = true;
+            this.time.delayedCall(500, resetHitCooldown, [], this); // Make cooldown stop in 1 second
+            TakeDamage(1);
+        }
+    }
+
+    function  TakeDamage(amount)
+    {
+        hp -= amount;
+        info.setText(hp);
+        console.log(hp);
     }
 
 
@@ -210,11 +263,17 @@
         //Set the background origin to be at (0, 0) or top left corner of the image rather than the center of the image asset
        let background = this.add.tileSprite(0, 0, game.scale.width, game.scale.height, 'sky').setOrigin(0, 0);
 
+
+
+
        //Create the platforms and the player character set to collide with the platforms
        createPlatforms(this);
        player = new Player(this, 400, 400);
        this.physics.add.collider(player, platforms);
        this.physics.add.overlap(player, slugs, CollisionDamage, null, this);
+       this.physics.add.overlap(player, bullets, CollisionDeleter, null, this);
+
+       info = this.add.text(player.x - 200, player.y + 200, '4', { font: '48px Arial', fill: '#000000' });
 
        slug = new Slug(this, 600, 605.6);
        this.physics.add.collider(slug, platforms);
@@ -231,6 +290,10 @@
        keys = this.input.keyboard.addKeys('A, D');
        space = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
        space.on('down', jump); //calls jump function when space is pressed
+
+
+
+       this.physics.add.overlap(bullets, platforms, reverseDespawn, null, this);
 
        this.cameras.main.setBounds(0, 0, 10000, 10000);
        this.cameras.main.startFollow(player, true, 0.08, 0.08);
@@ -291,12 +354,12 @@
             }
 
             myArrow = new Arrow(this, player.x + offset, player.y); // Spawn arrow
-
-
-
-            this.physics.add.overlap(myArrow, slugs, despawn, null, this); // Make the arrow despawn slugs
+            arrows.push(myArrow);
             this.physics.add.overlap(myArrow, platforms, reverseDespawn, null, this); // Make platforms despawn the arrow
         }
+
+        info.x = this.cameras.main.worldView.x + 25;
+        info.y = this.cameras.main.worldView.y + 20;
     }
 
     function resetCooldown()
@@ -314,7 +377,7 @@
         if (player.body.touching.down)
         {
              currentJumps = MAX_JUMP_COUNT - 1;
-            player.setVelocityY(-1100);
+            player.setVelocityY(-900); // previously was 1100
         }
         else if (currentJumps > 0)
         {
