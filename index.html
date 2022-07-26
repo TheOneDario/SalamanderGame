@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.js"></script>
+
+</head>
+
+<body>
+
+    <script>
+    //PAT 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
+    var config = {
+        type: Phaser.AUTO,
+        width: 1280,
+        height: 700,
+        physics: {
+            default: 'arcade',
+        },
+
+        scene: {
+            preload: preload,
+            create: create,
+            update: update,
+        }
+
+    };
+
+    class Player extends Phaser.Physics.Arcade.Sprite
+    {
+        constructor(scene, x, y)
+        {
+            super(scene, x, y, 'player');
+            scene.add.existing(this);
+            scene.physics.add.existing(this);
+            this.setScale(2);
+            this.setCollideWorldBounds(true);
+            this.setGravityY(3000); //We will set gravity *per object* rather than for the scene!
+        }
+    }
+
+    class Slug extends Phaser.Physics.Arcade.Sprite
+    {
+        constructor(scene, x, y)
+        {
+            super(scene, x, y, 'slug');
+            scene.add.existing(this);
+            scene.physics.add.existing(this);
+            this.setScale(0.4);
+            this.setCollideWorldBounds(true);
+            this.setGravityY(3000);
+        }
+
+        addTween(scene, xDist, yDist, time)
+        {
+            scene.tweens.add({ targets: this, x: xDist, y: yDist, duration: time, ease: 'Linear', repeat: -1, yoyo: true });
+        }
+
+        pathfind()
+        {
+
+        }
+    }
+
+    class WingSlug extends Slug
+    {
+          constructor(scene, x, y)
+          {
+             super(scene, x, y, 'wingslug');
+             scene.add.existing(this);
+             scene.physics.add.existing(this);
+             this.setScale(0.4);
+             this.setCollideWorldBounds(true);
+             this.setGravityY(3000);
+          }
+
+          pathfind()
+          {
+                if (this.x < player.x) // If slug is too far left
+                {
+                      this.setVelocityX(180); // Move right
+                }
+                else if (this.x > player.x) // If slug is too far right
+                {
+                      this.setVelocityX(-180); // Move left
+                }
+
+                if ((this.y - player.y) > 4) // If more than 4px below player
+                {
+                      this.setVelocityY(-250); // Jump
+                }
+          }
+        }
+
+        class Arrow extends Phaser.Physics.Arcade.Sprite
+        {
+            constructor (scene, x, y)
+            {
+                super(scene, x, y, 'arrow');
+                scene.add.existing(this);
+                scene.physics.add.existing(this);
+                this.setScale(1);
+                this.setCollideWorldBounds(false);
+
+                if (!facingRight)
+                {
+                    this.setFlip(true, false);
+                }
+            }
+        }
+
+
+
+    var game = new Phaser.Game(config);
+
+    //Game Objects
+    var platforms;
+    var player;
+
+    //Keyboard controls
+    var cursors;
+    var keys;
+    var space;
+
+    var hp = 4;
+
+    var cooldown = false;
+    var hitCooldown = false;
+
+    var facingRight = true;
+
+    var MAX_JUMP_COUNT = 2;
+    var currentJumps = MAX_JUMP_COUNT;
+
+    var slugs = [];
+    var wingSlugs = [];
+
+    function preload()
+    {
+        this.load.image('sky', 'assets/bg.png');
+        this.load.image('platform', 'assets/platform.png');
+        this.load.image('player', 'assets/wabbit.png');
+        this.load.image('slug', 'assets/slug.png');
+        this.load.image('wingslug', 'assets/slug.png');
+        this.load.image('arrow', 'assets/arrow.png');
+        this.load.image('bullet', 'assets/bullet.png')
+    }
+
+    function despawn(despawner, despawnee)
+    {
+        despawnee.disableBody(true, true); //remove that particular carrot from the game (physics and visibility)
+    }
+
+    function reverseDespawn(despawnee, despawner)
+    {
+        despawnee.disableBody(true, true);
+    }
+    // Music credit: Music by Marllon Silva (xDeviruchi)
+
+    /**
+    TODO: Add bullets that can hit slugs
+    TODO: Make camera follow player around the level
+    TODO: Import tileset and level
+    TODO: Win condition
+    TODO: Maybe NPCs
+    **/
+
+    function CollisionDamage(myPlayer, myEnemy)
+    {
+        if (!hitCooldown)
+        {
+            hitCooldown = true;
+            this.time.delayedCall(1000, resetHitCooldown, [], this); // Make cooldown stop in 1 second
+            hp--;
+            if (hp <= 0)
+            {
+              console.log("L");
+            }
+        }
+    }
+
+
+
+
+
+
+
+    function create()
+    {
+        //Set the background origin to be at (0, 0) or top left corner of the image rather than the center of the image asset
+       let background = this.add.tileSprite(0, 0, game.scale.width, game.scale.height, 'sky').setOrigin(0, 0);
+
+       //Create the platforms and the player character set to collide with the platforms
+       createPlatforms(this);
+       player = new Player(this, 400, 400);
+       this.physics.add.collider(player, platforms);
+       this.physics.add.overlap(player, slugs, CollisionDamage, null, this);
+
+       slug = new Slug(this, 600, 605.6);
+       this.physics.add.collider(slug, platforms);
+       slug.addTween(this, slug.x + 200, slug.y, 2000);
+       slugs.push(slug); // add to list of slugs
+
+       wingSlug = new WingSlug(this, 200, 605.6);
+       this.physics.add.overlap(wingSlug, player);
+       this.physics.add.collider(wingSlug, platforms);
+       slugs.push(wingSlug); // add to list of winged slugs
+
+       //Set up user input
+       cursors = this.input.keyboard.createCursorKeys();
+       keys = this.input.keyboard.addKeys('A, D');
+       space = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+       space.on('down', jump); //calls jump function when space is pressed
+
+       this.cameras.main.setBounds(0, 0, 10000, 10000);
+       this.cameras.main.startFollow(player, true, 0.08, 0.08);
+       this.cameras.main.setZoom(1.3);
+    }
+
+
+    function createPlatforms(scene)
+    {
+        platforms = scene.physics.add.staticGroup();
+
+        //basePlatform is the floor of the game
+        let basePlatform = platforms.create(game.scale.width/2, game.scale.height-30, 'platform');
+        basePlatform.setScale(3, 1).refreshBody(); //scales the base platform in the x axis to cover the entire floor
+
+        platforms.create(250, 350, 'platform'); //creates the upper left platform
+        platforms.create(950, 500, 'platform'); //creates the bottome right platform
+    }
+
+    function update(time, delta)
+    {
+        //Player will not move in the x-axis unless a movement key is being pressed
+        player.setVelocityX(0);
+
+        //Player has "drag" on the x-axis meaning they slide a bit after an input
+        player.setDragX(1000);
+
+        //Handle player movements
+        if (cursors.left.isDown || keys.A.isDown)
+        {
+            facingRight = false;
+            player.setVelocityX(-400);
+        }
+
+        if (cursors.right.isDown || keys.D.isDown)
+        {
+            facingRight = true;
+            player.setVelocityX(400);
+        }
+
+        for (let i = 0; i < slugs.length; i++) // For each winged slug
+        {
+              slugs[i].pathfind(); // Make each wing slug move towards player
+        }
+
+        if (cursors.up.isDown && !cooldown)
+        {
+            cooldown = true; // Turn on arrow cooldown
+            this.time.delayedCall(1000, resetCooldown, [], this); // Make cooldown stop in 1 second
+
+            let offset = 50;
+            if (facingRight)
+            {
+                offset = 50;
+            }
+            else {
+                offset = -50;
+            }
+
+            myArrow = new Arrow(this, player.x + offset, player.y); // Spawn arrow
+
+
+
+            this.physics.add.overlap(myArrow, slugs, despawn, null, this); // Make the arrow despawn slugs
+            this.physics.add.overlap(myArrow, platforms, reverseDespawn, null, this); // Make platforms despawn the arrow
+
+
+            if (facingRight)
+            {
+              myArrow.setVelocityX(800);
+            }
+            else {
+              myArrow.setVelocityX(-800);
+            }
+        }
+    }
+
+    function resetCooldown()
+    {
+        cooldown = false;
+    }
+
+    function resetHitCooldown()
+    {
+        hitCooldown = false;
+    }
+
+    function jump(event)
+    {
+        if (player.body.touching.down)
+        {
+             currentJumps = MAX_JUMP_COUNT - 1;
+            player.setVelocityY(-1100);
+        }
+        else if (currentJumps > 0)
+        {
+            currentJumps--;
+            player.setVelocityY(-700);
+       }
+    }
+
+    </script>
+
+</body>
+
+</html>
