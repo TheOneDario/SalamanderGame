@@ -145,7 +145,9 @@
         this.load.image('slug', 'assets/slug.png');
         this.load.image('wingslug', 'assets/slug.png');
         this.load.image('arrow', 'assets/arrow.png');
-        this.load.image('bullet', 'assets/bullet.png')
+        this.load.image('bullet', 'assets/bullet.png');
+        this.load.image('tileset', 'jungleTileSet.png');
+        this.load.tilemapTiledJSON('tilemap', 'level1.json' );
     }
 
     function despawn(despawner, despawnee)
@@ -215,7 +217,7 @@
        space.on('down', jump); //calls jump function when space is pressed
 
        this.cameras.main.setBounds(0, 0, 10000, 10000);
-       this.cameras.main.startFollow(player, true, 0.08, 0.08);
+       this.cameras.main.startFollow(player, true, 0.08, 0.04);
        this.cameras.main.setZoom(1.3);
     }
 
