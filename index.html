@@ -11,7 +11,7 @@
 <body>
 
     <script>
-    //PAT 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
+    //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
     var config = {
         type: Phaser.AUTO,
         width: 1280,
@@ -92,24 +92,42 @@
                       this.setVelocityY(-250); // Jump
                 }
           }
-        }
+    }
 
-        class Arrow extends Phaser.Physics.Arcade.Sprite
+    class Arrow extends Phaser.Physics.Arcade.Sprite
+    {
+        constructor (scene, x, y)
         {
-            constructor (scene, x, y)
-            {
-                super(scene, x, y, 'arrow');
-                scene.add.existing(this);
-                scene.physics.add.existing(this);
-                this.setScale(1);
-                this.setCollideWorldBounds(false);
+            super(scene, x, y, 'arrow');
+            scene.add.existing(this);
+            scene.physics.add.existing(this);
+            this.setScale(1);
+            this.setCollideWorldBounds(false);
 
-                if (!facingRight)
-                {
-                    this.setFlip(true, false);
-                }
+            if (!facingRight)
+            {
+                this.setFlip(true, false);
+                this.setVelocityX(-800);
+            }
+            else
+            {
+                this.setVelocityX(800);
             }
         }
+    }
+
+    class Slime extends Phaser.Physics.Arcade.Sprite
+    {
+        constructor(scene, x, y, xSpeed, ySpeed)
+        {
+            super(scene, x, y, 'slime');
+            scene.add.existing(this);
+            scene.physics.add.existing(this);
+            this.setScale(1);
+            this.setCollideWorldBounds(false);
+            this.setVelocity(xSpeed, ySpeed);
+        }
+    }
 
 
 
@@ -280,15 +298,6 @@
 
             this.physics.add.overlap(myArrow, slugs, despawn, null, this); // Make the arrow despawn slugs
             this.physics.add.overlap(myArrow, platforms, reverseDespawn, null, this); // Make platforms despawn the arrow
-
-
-            if (facingRight)
-            {
-              myArrow.setVelocityX(800);
-            }
-            else {
-              myArrow.setVelocityX(-800);
-            }
         }
     }
 
