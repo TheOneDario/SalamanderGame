@@ -75,25 +75,37 @@ History
         constructor(scene, x, y)
         {
             super(scene, x, y, 'slug');
-            this.hp = 1;
+            this.hp = 5;
             this.scene.physics.add.overlap(arrows, this, this.takeDamage, null, this); // Make the arrow despawn slugs
             scene.add.existing(this);
             scene.physics.add.existing(this);
-            this.setScale(0.4);
+            this.setScale(0.2);
             this.setCollideWorldBounds(true);
             this.setGravityY(3000);
+            this.aggressive = false;
         }
 
         addTween(scene, xDist, yDist, time)
         {
-            scene.tweens.add({ targets: this, x: xDist, y: yDist, duration: time, ease: 'Linear', repeat: -1, yoyo: true });
+            //scene.tweens.add({ targets: this, x: xDist, y: yDist, duration: time, ease: 'Linear', repeat: -1, yoyo: true });
         }
 
         takeDamage(myArrow, me)
         {
+            this.aggressive = true;
+
+            if (myArrow.movingRight)
+            {
+                this.x+= 8;
+            }
+            else
+            {
+                this.x -= 8;
+            }
+
             reverseDespawn(myArrow, me);
             this.hp--;
-            if (this.hp < 0)
+            if (this.hp <= 0)
             {
                 despawn(this, this);
             }
@@ -101,7 +113,21 @@ History
 
         pathfind()
         {
-
+            if (this.aggressive)
+            {
+                if (this.x < player.x) // If slug is too far left
+                {
+                      this.setVelocityX(50); // Move right
+                }
+                else if (this.x > player.x) // If slug is too far right
+                {
+                      this.setVelocityX(-50); // Move left
+                }
+            }
+            else if (Phaser.Math.Distance.Between(player.x, player.y, this.x, this.y) <= 50)
+            {
+                this.aggressive = true;
+            }
         }
     }
 
@@ -129,7 +155,7 @@ History
              super(scene, x, y, 'wingslug');
              scene.add.existing(this);
              scene.physics.add.existing(this);
-             this.setScale(0.25);
+             this.setScale(0.2);
              this.setCollideWorldBounds(true);
              this.setGravityY(3000);
 
@@ -146,16 +172,16 @@ History
           {
                 if (this.x < player.x) // If slug is too far left
                 {
-                      this.setVelocityX(180); // Move right
+                      this.setVelocityX(50); // Move right
                 }
                 else if (this.x > player.x) // If slug is too far right
                 {
-                      this.setVelocityX(-180); // Move left
+                      this.setVelocityX(-50); // Move left
                 }
 
                 if ((this.y - player.y) > 4) // If more than 4px below player
                 {
-                      this.setVelocityY(-250); // Jump
+                      this.setVelocityY(-100); // Jump
                 }
           }
     }
@@ -167,17 +193,19 @@ History
             super(scene, x, y, 'arrow');
             scene.add.existing(this);
             scene.physics.add.existing(this);
-            this.setScale(1);
+            this.setScale(0.8);
             this.setCollideWorldBounds(false);
 
             if (!facingRight)
             {
                 this.setFlip(true, false);
-                this.setVelocityX(-800);
+                this.setVelocityX(-400);
+                this.movingRight = false;
             }
             else
             {
-                this.setVelocityX(800);
+                this.setVelocityX(400);
+                this.movingRight = true;
             }
         }
     }
@@ -232,6 +260,7 @@ History
         this.load.image('slug', 'assets/slug.png');
         this.load.image('wingslug', 'assets/slug.png');
         this.load.image('arrow', 'assets/arrow.png');
+        this.load.image('slime', 'assets/slime.png');
         this.load.image('bullet', 'assets/bullet.png');
         this.load.image('slime', 'assets/slime.png');
         this.load.image('tileset', 'assets/jungleTileSet.png');
@@ -304,9 +333,8 @@ History
 
        info = this.add.text(player.x - 200, player.y + 200, '4', { font: '48px Arial', fill: '#000000' });
 
-       slug = new Slug(this, 600, 605.6);
+       slug = new Slug(this, 307, 560);
        this.physics.add.collider(slug, layer);
-       slug.addTween(this, slug.x + 200, slug.y, 2000);
        slugs.push(slug); // add to list of slugs
 
        wingSlug = new WingSlug(this, 200, 605.6);
@@ -324,23 +352,16 @@ History
 
        this.physics.add.overlap(bullets, layer, reverseDespawn, null, this);
 
-       this.cameras.main.setBounds(0, 0, 10000, 10000);
+       this.cameras.main.setBounds(0, 0, 700, 700);
        this.cameras.main.startFollow(player, true, 0.08, 0.04);
-       this.cameras.main.setZoom(2);
-
-       //adds tileset map
-       map = this.make.tilemap({ key: 'tilemap'});
-       var tileset = map.addTilesetImage('jungleTileSet', 'tileset');
-       var layer = map.createLayer(0, tileset, 0, 0);
-       layer.setCollisionByExclusion([-1]);
-       this.physics.add.collider(player, layer);
-       layer.setScale(1.37);
+       this.cameras.main.setZoom(2.6);
     }
 
 
 
     function update(time, delta)
     {
+      console.log(player.x + ", " + player.y);
         //Player will not move in the x-axis unless a movement key is being pressed
         player.setVelocityX(0);
 
@@ -351,16 +372,16 @@ History
         if (cursors.left.isDown || keys.A.isDown)
         {
             facingRight = false;
-            player.setVelocityX(-400);
+            player.setVelocityX(-200);
         }
 
         if (cursors.right.isDown || keys.D.isDown)
         {
             facingRight = true;
-            player.setVelocityX(400);
+            player.setVelocityX(200);
         }
 
-        for (let i = 0; i < slugs.length; i++) // For each winged slug
+        for (let i = 0; i < slugs.length; i-=-1) // For each winged slug
         {
               slugs[i].pathfind(); // Make each wing slug move towards player
         }
@@ -385,6 +406,8 @@ History
 
             this.physics.add.overlap(myArrow, slugs, despawn, null, this); // Make the arrow despawn slugs
             this.physics.add.overlap(myArrow, layer, reverseDespawn, null, this); // Make layer despawn the arrow
+
+            arrows.push(myArrow);
         }
 
         info.x = this.cameras.main.worldView.x + 25;
