@@ -11,7 +11,11 @@
 <body>
 
     <script>
+<<<<<<< HEAD
 
+=======
+    //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
+>>>>>>> 608012b52c526766d5989d8924985c19479b25e5
     var config = {
         type: Phaser.AUTO,
         width: 1200,
@@ -36,7 +40,7 @@
             super(scene, x, y, 'player');
             scene.add.existing(this);
             scene.physics.add.existing(this);
-            this.setScale(2);
+            this.setScale(1);
             this.setCollideWorldBounds(true);
             this.setGravityY(3000); //We will set gravity *per object* rather than for the scene!
         }
@@ -47,46 +51,118 @@
         constructor(scene, x, y)
         {
             super(scene, x, y, 'slug');
+            this.hp = 5;
+            this.scene.physics.add.overlap(arrows, this, this.takeDamage, null, this); // Make the arrow despawn slugs
             scene.add.existing(this);
             scene.physics.add.existing(this);
-            this.setScale(0.4);
+            this.setScale(0.2);
             this.setCollideWorldBounds(true);
             this.setGravityY(3000);
+            this.aggressive = false;
         }
 
         addTween(scene, xDist, yDist, time)
         {
-            scene.tweens.add({ targets: this, x: xDist, y: yDist, duration: time, ease: 'Linear', repeat: -1, yoyo: true });
+            //scene.tweens.add({ targets: this, x: xDist, y: yDist, duration: time, ease: 'Linear', repeat: -1, yoyo: true });
         }
+
+        takeDamage(myArrow, me)
+        {
+            this.aggressive = true;
+
+            if (myArrow.movingRight)
+            {
+                this.x+= 8;
+            }
+            else
+            {
+                this.x -= 8;
+            }
+
+            reverseDespawn(myArrow, me);
+            this.hp--;
+            if (this.hp <= 0)
+            {
+                despawn(this, this);
+            }
+        }
+<<<<<<< HEAD
+=======
+
+        pathfind()
+        {
+            if (this.aggressive)
+            {
+                if (this.x < player.x) // If slug is too far left
+                {
+                      this.setVelocityX(50); // Move right
+                }
+                else if (this.x > player.x) // If slug is too far right
+                {
+                      this.setVelocityX(-50); // Move left
+                }
+            }
+            else if (Phaser.Math.Distance.Between(player.x, player.y, this.x, this.y) <= 50)
+            {
+                this.aggressive = true;
+            }
+        }
+>>>>>>> 608012b52c526766d5989d8924985c19479b25e5
     }
 
     class WingSlug extends Phaser.Physics.Arcade.Sprite
     {
+          fire(myScene, obj)
+          {
+              if (obj.active)
+              {
+                  let myVector = new Phaser.Math.Vector2();
+                  myVector.x = player.x - obj.x;
+                  myVector.y = player.y - obj.y;
+                  myVector.normalize();
+                  myVector.x += Phaser.Math.Between(-2, 2) / 10;
+                  myVector.y += Phaser.Math.Between(-2, 2) / 10;
+                  myVector.normalize();
+
+                  let mySlime = new Slime(myScene, obj.x, obj.y, myVector.x * 300, myVector.y * 300);
+                  bullets.push(mySlime);
+              }
+          }
+
           constructor(scene, x, y)
           {
              super(scene, x, y, 'wingslug');
              scene.add.existing(this);
              scene.physics.add.existing(this);
-             this.setScale(0.4);
+             this.setScale(0.2);
              this.setCollideWorldBounds(true);
              this.setGravityY(3000);
+
+             var timer = scene.time.addEvent({
+                  delay: 300,
+                  callback: this.fire,
+                  args: [scene, this],
+                  callbackScope: scene,
+                  loop: true
+              });
           }
 
           pathfind()
           {
                 if (this.x < player.x) // If slug is too far left
                 {
-                      this.setVelocityX(180); // Move right
+                      this.setVelocityX(50); // Move right
                 }
                 else if (this.x > player.x) // If slug is too far right
                 {
-                      this.setVelocityX(-180); // Move left
+                      this.setVelocityX(-50); // Move left
                 }
 
                 if ((this.y - player.y) > 10) // If more than 10px below player
                 {
-                      this.setVelocityY(-250); // Jump
+                      this.setVelocityY(-100); // Jump
                 }
+<<<<<<< HEAD
               }
             }
 
@@ -100,8 +176,60 @@
               this.setScale(3);
               this.setCollideWorldBounds(true);
               this.play(animation);
+=======
+          }
+    }
+
+    class Arrow extends Phaser.Physics.Arcade.Sprite
+    {
+        constructor (scene, x, y)
+        {
+            super(scene, x, y, 'arrow');
+            scene.add.existing(this);
+            scene.physics.add.existing(this);
+            this.setScale(0.8);
+            this.setCollideWorldBounds(false);
+
+            if (!facingRight)
+            {
+                this.setFlip(true, false);
+                this.setVelocityX(-400);
+                this.movingRight = false;
+            }
+            else
+            {
+                this.setVelocityX(400);
+                this.movingRight = true;
+>>>>>>> 608012b52c526766d5989d8924985c19479b25e5
             }
         }
+    }
+
+    class Slime extends Phaser.Physics.Arcade.Sprite
+    {
+        constructor(scene, x, y, xSpeed, ySpeed)
+        {
+            super(scene, x, y, 'slime');
+            scene.add.existing(this);
+            scene.physics.add.existing(this);
+            this.setScale(0.02);
+            this.setCollideWorldBounds(false);
+            this.setVelocity(xSpeed, ySpeed);
+        }
+    }
+
+    class Fox extends Phaser.Physics.Arcade.Sprite
+    {
+        constructor(scene, x, y, spritesheet, animation)
+        {
+          super(scene, x, y, spritesheet, animation);
+          scene.add.existing(this);
+          scene.physics.add.existing(this);
+          this.setScale(2);
+          this.setCollideWorldBounds(true);
+          this.play(animation);
+        }
+    }
 
 
 
@@ -109,8 +237,9 @@
     var game = new Phaser.Game(config);
 
     //Game Objects
-    var platforms;
+    var layer;
     var player;
+    var map;
 
     //Keyboard controls
     var cursors;
@@ -121,6 +250,9 @@
     var currentJumps = MAX_JUMP_COUNT;
 
     var slugs = [];
+    var arrows = [];
+    var bullets = [];
+    var bubbles = [];
     var wingSlugs = [];
     var bubbles = [];
 
@@ -130,11 +262,28 @@
         this.load.image('platform', 'assets/platform.png');
         this.load.image('player', 'assets/wabbit.png');
         this.load.image('slug', 'assets/slug.png');
+<<<<<<< HEAD
         this.load.image('wingslug', 'assets/redslug.png');
         this.load.atlas('fox', 'assets/Fox_Sprite.png', 'assets/Fox_Sprite.json');
 
     }
 
+=======
+        this.load.image('wingslug', 'assets/slug.png');
+        this.load.image('arrow', 'assets/arrow.png');
+        this.load.image('slime', 'assets/slime.png');
+        this.load.image('bullet', 'assets/bullet.png');
+        this.load.image('slime', 'assets/slime.png');
+        this.load.image('tileset', 'assets/jungleTileSet.png');
+        this.load.atlas('fox', 'assets/Fox_Sprite.png', 'assets/Fox_Sprite.json');
+        this.load.tilemapTiledJSON('tilemap', 'assets/level1v2.json');
+    }
+
+    function despawn(despawner, despawnee)
+    {
+        despawnee.disableBody(true, true); //remove that particuhp--;
+    }
+>>>>>>> 608012b52c526766d5989d8924985c19479b25e5
 
     // Music credit: Music by Marllon Silva (xDeviruchi)
 
@@ -146,11 +295,49 @@
     TODO: Maybe NPCs
     **/
 
+<<<<<<< HEAD
+=======
+    function CollisionDamage(myPlayer, myEnemy)
+    {
+        if (!hitCooldown)
+        {
+            hitCooldown = true;
+            this.time.delayedCall(500, resetHitCooldown, [], this); // Make cooldown stop in 1 second
+            TakeDamage(1);
+        }
+    }
+
+    function CollisionDeleter(myPlayer, myEnemy)
+    {
+        if (!hitCooldown)
+        {
+            despawn(this, myEnemy);
+            hitCooldown = true;
+            this.time.delayedCall(500, resetHitCooldown, [], this); // Make cooldown stop in 1 second
+            TakeDamage(1);
+        }
+    }
+
+    function  TakeDamage(amount)
+    {
+        hp -= amount;
+        info.setText(hp);
+        console.log(hp);
+    }
+
+
+
+
+
+
+
+>>>>>>> 608012b52c526766d5989d8924985c19479b25e5
     function create()
     {
         //Set the background origin to be at (0, 0) or top left corner of the image rather than the center of the image asset
        let background = this.add.tileSprite(0, 0, game.scale.width, game.scale.height, 'sky').setOrigin(0, 0);
 
+<<<<<<< HEAD
        //Create the platforms and the player character set to collide with the platforms
        createPlatforms(this);
        player = new Player(this, 400, 400);
@@ -160,12 +347,29 @@
        this.physics.add.overlap(slug, player);
        this.physics.add.collider(slug, platforms);
        slug.addTween(this, slug.x + 200, slug.y, 2000);
+=======
+       //Create the layer and the player character set to collide with the layer
+       player = new Player(this, 100, 50);
+       this.physics.add.collider(player, layer);
+       this.physics.add.overlap(player, slugs, CollisionDamage, null, this);
+       this.physics.add.overlap(player, bullets, CollisionDeleter, null, this);
+
+       info = this.add.text(player.x - 200, player.y + 200, '4', { font: '48px Arial', fill: '#000000' });
+
+       slug = new Slug(this, 307, 560);
+       this.physics.add.collider(slug, layer);
+>>>>>>> 608012b52c526766d5989d8924985c19479b25e5
        slugs.push(slug); // add to list of slugs
 
        wingSlug = new WingSlug(this, 200, 605.6);
        this.physics.add.overlap(wingSlug, player);
+<<<<<<< HEAD
        this.physics.add.collider(wingSlug, platforms);
        wingSlugs.push(wingSlug); // add to list of winged slugs
+=======
+       this.physics.add.collider(wingSlug, layer);
+       slugs.push(wingSlug); // add to list of winged slugs
+>>>>>>> 608012b52c526766d5989d8924985c19479b25e5
 
        //Set up user input
        cursors = this.input.keyboard.createCursorKeys();
@@ -173,13 +377,34 @@
        space = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
        space.on('down', jump); //calls jump function when space is pressed
 
+<<<<<<< HEAD
        this.anims.create({key: 'foxally', frames: this.anims.generateFrameNames('fox', {prefix: 'Fox', end: 4, zeroPad: 1}), repeat: -1
      });
        fox = new Fox(this, 185, 295, 'fox', 'foxally');
+=======
+
+
+       this.physics.add.overlap(bullets, layer, reverseDespawn, null, this);
+
+       this.cameras.main.setBounds(0, 0, 700, 700);
+       this.cameras.main.startFollow(player, true, 0.08, 0.04);
+       this.cameras.main.setZoom(2.6);
+
+        map = this.make.tilemap({ key: 'tilemap'});
+        var tileset = map.addTilesetImage('jungleTileSet', 'tileset');
+        var layer = map.createLayer(0, tileset, 0, 0);
+        layer.setCollisionByExclusion([-1]);
+        this.physics.add.collider(player, layer);
+        layer.setScale(1.37);
+
+        this.anims.create({key: 'foxally', frames: this.anims.generateFrameNames('fox', {prefix: 'Fox', end: 4, zeroPad: 1}), repeat: -1});
+        fox = new Fox(this, 200, 50, 'fox', 'foxally');
+>>>>>>> 608012b52c526766d5989d8924985c19479b25e5
 
 
 
        createSpeechBubble(180, 210, 200, 50, '“YEAHHHHH WOOOOO!"', this);
+<<<<<<< HEAD
 
 
    }
@@ -238,20 +463,65 @@
 
 
     function createPlatforms(scene)
-    {
-        platforms = scene.physics.add.staticGroup();
-
-        //basePlatform is the floor of the game
-        let basePlatform = platforms.create(game.scale.width/2, game.scale.height-30, 'platform');
-        basePlatform.setScale(3, 1).refreshBody(); //scales the base platform in the x axis to cover the entire floor
-
-        platforms.create(250, 350, 'platform'); //creates the upper left platform
-        platforms.create(950, 500, 'platform'); //creates the bottome right platform
+=======
     }
+
+    function createSpeechBubble (x, y, width, height, quote, scene)
+>>>>>>> 608012b52c526766d5989d8924985c19479b25e5
+    {
+        var bubbleWidth = width;
+        var bubbleHeight = height;
+        var bubblePadding = 10;
+        var arrowHeight = bubbleHeight / 4;
+
+        var bubble = scene.add.graphics({ x: x, y: y });
+
+        //  Bubble shadow
+        bubble.fillStyle(0x222222, 0.5);
+        bubble.fillRoundedRect(6, 6, bubbleWidth, bubbleHeight, 16);
+
+        //  Bubble color
+        bubble.fillStyle(0xffffff, 1);
+
+        //  Bubble outline line style
+        bubble.lineStyle(4, 0x565656, 1);
+
+        //  Bubble shape and outline
+        bubble.strokeRoundedRect(0, 0, bubbleWidth, bubbleHeight, 16);
+        bubble.fillRoundedRect(0, 0, bubbleWidth, bubbleHeight, 16);
+
+        //  Calculate arrow coordinates
+        var point1X = Math.floor(bubbleWidth / 7);
+        var point1Y = bubbleHeight;
+        var point2X = Math.floor((bubbleWidth / 7) * 2);
+        var point2Y = bubbleHeight;
+        var point3X = Math.floor(bubbleWidth / 7);
+        var point3Y = Math.floor(bubbleHeight + arrowHeight);
+
+
+        //  Bubble arrow shadow
+        bubble.lineStyle(4, 0x222222, 0.5);
+        bubble.lineBetween(point2X - 1, point2Y + 6, point3X + 2, point3Y);
+
+        //  Bubble arrow fill
+        bubble.fillTriangle(point1X, point1Y, point2X, point2Y, point3X, point3Y);
+        bubble.lineStyle(2, 0x565656, 1);
+        bubble.lineBetween(point2X, point2Y, point3X, point3Y);
+        bubble.lineBetween(point1X, point1Y, point3X, point3Y);
+
+        var content = scene.add.text(0, 0, quote, { fontFamily: 'Arial', fontSize: 20, color: '#000000', align: 'center', wordWrap: { width: bubbleWidth - (bubblePadding * 2) } });
+
+        var b = content.getBounds();
+
+        content.setPosition(bubble.x + (bubbleWidth / 2) - (b.width / 2), bubble.y + (bubbleHeight / 2) - (b.height / 2));
+
+      }
+
 
 
     function update()
     {
+      console.log(player.x + ", " + player.y);
         //Player will not move in the x-axis unless a movement key is being pressed
         player.setVelocityX(0);
 
@@ -261,28 +531,81 @@
         //Handle player movements
         if (cursors.left.isDown || keys.A.isDown)
         {
+<<<<<<< HEAD
             player.setVelocityX(-400);
             //this.player.setAngle(-90);
+=======
+            facingRight = false;
+            player.setVelocityX(-200);
+>>>>>>> 608012b52c526766d5989d8924985c19479b25e5
         }
 
         if (cursors.right.isDown || keys.D.isDown)
         {
+<<<<<<< HEAD
             player.setVelocityX(400);
             //this.player.setAngle(90);
         }
 
         for (let i = 0; i < wingSlugs.length; i++) // For each winged slug
+=======
+            facingRight = true;
+            player.setVelocityX(200);
+        }
+
+        for (let i = 0; i < slugs.length; i-=-1) // For each winged slug
+>>>>>>> 608012b52c526766d5989d8924985c19479b25e5
         {
              wingSlugs[i].pathfind(); // Make each winger slug move towards player
         }
+<<<<<<< HEAD
+=======
+
+        if (cursors.up.isDown && !cooldown)
+        {
+            cooldown = true; // Turn on arrow cooldown
+            this.time.delayedCall(1000, resetCooldown, [], this); // Make cooldown stop in 1 second
+
+            let offset = 50;
+            if (facingRight)
+            {
+                offset = 50;
+            }
+            else {
+                offset = -50;
+            }
+
+            myArrow = new Arrow(this, player.x + offset, player.y); // Spawn arrow
+
+
+
+            this.physics.add.overlap(myArrow, slugs, despawn, null, this); // Make the arrow despawn slugs
+            this.physics.add.overlap(myArrow, layer, reverseDespawn, null, this); // Make layer despawn the arrow
+
+            arrows.push(myArrow);
+        }
+
+        info.x = this.cameras.main.worldView.x + 25;
+        info.y = this.cameras.main.worldView.y + 20;
+    }
+
+    function resetCooldown()
+    {
+        cooldown = false;
+    }
+
+    function resetHitCooldown()
+    {
+        hitCooldown = false;
+>>>>>>> 608012b52c526766d5989d8924985c19479b25e5
     }
 
     function jump(event)
     {
-        if (player.body.touching.down)
+        if (player.body.onFloor())
         {
              currentJumps = MAX_JUMP_COUNT - 1;
-            player.setVelocityY(-1100);
+            player.setVelocityY(-900); // previously was 1100
         }
         else if (currentJumps > 0)
         {
