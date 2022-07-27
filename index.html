@@ -55,7 +55,7 @@
             scene.physics.add.existing(this);
             this.setScale(0.2);
             this.setCollideWorldBounds(true);
-            this.setGravityY(3000);
+            this.setGravityY(2000);
             this.aggressive = false;
         }
 
@@ -295,6 +295,29 @@
         despawnee.disableBody(true, true); //remove that object
     }
 
+    function createSlug(x, y, type, scene) // type 0: normal, type 1: winged
+    {
+        switch(type)
+        {
+            case 0:
+                slug = new Slug(scene, x, y);
+                slugs.push(slug); // add to list of slugs
+                scene.physics.add.collider(slug, layer); // make slugs collide with tiles
+                break;
+            case 1:
+                wingSlug = new WingSlug(scene, x, y);
+                slugs.push(wingSlug); // add to list of winged slugs
+                scene.physics.add.collider(wingSlug, layer);
+                break;
+            default:
+                slug = new Slug(this, x, y);
+                slugs.push(slug); // add to list of slugs
+                scene.physics.add.collider(slug, layer); // make slugs collide with tiles
+                break;
+        }
+    }
+
+
     // Music credit: Music by Marllon Silva (xDeviruchi)
 
     /**
@@ -338,13 +361,12 @@
         //Set the background origin to be at (0, 0) or top left corner of the image rather than the center of the image asset
        let background = this.add.tileSprite(0, 0, game.scale.width, game.scale.height, 'sky').setOrigin(0, 0);
 
-       //Create the layer and the player character set to collide with the layer
+       //Create the layer
        player = new Player(this, 100, 50);
        player.setDepth(1);
-       this.physics.add.overlap(player, slugs, CollisionDamage, null, this); // make enemies deal damage
-       this.physics.add.overlap(player, bullets, CollisionDeleter, null, this); // make enemy bullets deal damage then despawn
 
 
+       // Tileset and collisions
        map = this.make.tilemap({ key: 'tilemap'});
        var tileset = map.addTilesetImage('jungleTileSet', 'tileset');
        var layer = map.createLayer(0, tileset, 0, 0);
@@ -354,16 +376,13 @@
        this.physics.add.collider(bullets, layer, reverseDespawn, null, this); // make bullets despawn after hitting tiles
        this.physics.add.collider(slugs, layer); // make slugs collide with tiles
        this.physics.add.collider(arrows, layer, reverseDespawn, null, this); // make arrows despawn after hitting tiles
+       this.physics.add.overlap(player, slugs, CollisionDamage, null, this); // make enemies deal damage
+       this.physics.add.overlap(player, bullets, CollisionDeleter, null, this); // make enemy bullets deal damage then despawn
+
+       createSlug(307, 560, 0, this);
+       createSlug(200, 605.6, 1, this);
 
        info = this.add.text(player.x - 200, player.y + 200, '4', { font: '48px Arial', fill: '#000000' }); // set text location
-
-       slug = new Slug(this, 307, 560);
-       slugs.push(slug); // add to list of slugs
-       this.physics.add.collider(slug, layer); // make slugs collide with tiles
-
-       wingSlug = new WingSlug(this, 200, 605.6);
-       slugs.push(wingSlug); // add to list of winged slugs
-       this.physics.add.collider(wingSlug, layer);
 
        //Set up user input
        cursors = this.input.keyboard.createCursorKeys();
@@ -380,7 +399,7 @@
 
 
 
-       createSpeechBubble(210, 50, 140, 50, '“YEAHHHHH WOOOOO!"', this);
+       createSpeechBubble(210, 50, 140, 50, '“kill 2 slugs pls <3"', this);
    }
 
 
