@@ -287,7 +287,7 @@
         this.load.tilemapTiledJSON('tilemap', 'assets/level1v4.json');
     }
 
-    function despawn(despawner, despawnee)
+    function despawn(despa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wner, despawnee)
     {
         despawnee.disableBody(true, true); //remove that object
     }
@@ -377,13 +377,20 @@
        player = new Player(this, 100, 50);
        player.setDepth(1);
 
-
-       // Tileset and collisions
        map = this.make.tilemap({ key: 'tilemap'});
        var tileset = map.addTilesetImage('jungleTileSet', 'tileset');
-       var layer = map.createLayer(0, tileset, 0, 0);
+       var spikeTileset = map.addTilesetImage('16-bit-spike-Sheet', 'spikes');
+       var layer = map.createLayer('Tile Layer 1', tileset, 0, 0);
+       var spikeLayer = map.createLayer('Spikes', spikeTileset, 0, 0);
        layer.setCollisionByExclusion([-1]);
+       this.physics.add.collider(player, layer);
+       spikeLayer.setCollisionByExclusion([-1]);
+       //spikes collision
+       this.physics.add.collider(player, spikeLayer, CollisionKill, null, this);
        layer.setScale(1.37);
+       spikeLayer.setScale(1.37);
+
+       // Tileset and collisions
        this.physics.add.collider(player, layer); // make player collide with ground
        this.physics.add.collider(bullets, layer, reverseDespawn, null, this); // make bullets despawn after hitting tiles
        this.physics.add.collider(slugs, layer); // make slugs collide with tiles
@@ -406,23 +413,8 @@
        this.cameras.main.startFollow(player, true, 0.08, 0.04);
        this.cameras.main.setZoom(2.6);
 
-        map = this.make.tilemap({ key: 'tilemap'});
-        var tileset = map.addTilesetImage('jungleTileSet', 'tileset');
-        var spikeTileset = map.addTilesetImage('16-bit-spike-Sheet', 'spikes');
-        var layer = map.createLayer('Tile Layer 1', tileset, 0, 0);
-        var spikeLayer = map.createLayer('Spikes', spikeTileset, 0, 0);
-        layer.setCollisionByExclusion([-1]);
-        this.physics.add.collider(player, layer);
-        spikeLayer.setCollisionByExclusion([-1]);
-        //spikes collision
-        this.physics.add.collider(player, spikeLayer, CollisionKill, null, this);
-        layer.setScale(1.37);
-        spikeLayer.setScale(1.37);
-
-        this.anims.create({key: 'foxally', frames: this.anims.generateFrameNames('fox', {prefix: 'Fox', end: 4, zeroPad: 1}), repeat: -1});
-        fox = new Fox(this, 200, 50, 'fox', 'foxally');
-
-
+       this.anims.create({key: 'foxally', frames: this.anims.generateFrameNames('fox', {prefix: 'Fox', end: 4, zeroPad: 1}), repeat: -1});
+       fox = new Fox(this, 210, 124, 'fox', 'foxally');
 
        createSpeechBubble(210, 50, 140, 50, '“kill 2 slugs pls <3"', this);
    }
