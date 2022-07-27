@@ -1,3 +1,32 @@
+
+Skip to content
+Pull requests
+Issues
+Marketplace
+Explore
+@RPGkia25
+TheOneDario /
+SalamanderGame
+Public
+
+Code
+Issues
+Pull requests
+Actions
+Projects
+Wiki
+Security
+
+    Insights
+
+SalamanderGame/index.html
+Academy of Game Dev Camper Fixed the bugs I created
+Latest commit a6a277d 8 minutes ago
+History
+2 contributors
+@TheOneDario
+@Cheesuee
+393 lines (316 sloc) 10.6 KB
 <!DOCTYPE html>
 
 <html>
@@ -204,8 +233,9 @@
         this.load.image('wingslug', 'assets/slug.png');
         this.load.image('arrow', 'assets/arrow.png');
         this.load.image('bullet', 'assets/bullet.png');
+        this.load.image('slime', 'assets/slime.png');
         this.load.image('tileset', 'assets/jungleTileSet.png');
-        this.load.tilemapTiledJSON('tilemap', 'assets/level1.json' );
+        this.load.tilemapTiledJSON('tilemap', 'assets/level1v2.json');
     }
 
     function despawn(despawner, despawnee)
@@ -266,19 +296,9 @@
         //Set the background origin to be at (0, 0) or top left corner of the image rather than the center of the image asset
        let background = this.add.tileSprite(0, 0, game.scale.width, game.scale.height, 'sky').setOrigin(0, 0);
 
-<<<<<<< HEAD
        //Create the layer and the player character set to collide with the layer
        player = new Player(this, 100, 50);
        this.physics.add.collider(player, layer);
-=======
-
-
-
-       //Create the platforms and the player character set to collide with the platforms
-       createPlatforms(this);
-       player = new Player(this, 400, 400);
-       this.physics.add.collider(player, platforms);
->>>>>>> 7b37a9187f74e3a86bed71c6ee3fe24f155c9bac
        this.physics.add.overlap(player, slugs, CollisionDamage, null, this);
        this.physics.add.overlap(player, bullets, CollisionDeleter, null, this);
 
@@ -302,7 +322,7 @@
 
 
 
-       this.physics.add.overlap(bullets, platforms, reverseDespawn, null, this);
+       this.physics.add.overlap(bullets, layer, reverseDespawn, null, this);
 
        this.cameras.main.setBounds(0, 0, 10000, 10000);
        this.cameras.main.startFollow(player, true, 0.08, 0.04);
@@ -360,16 +380,11 @@
             }
 
             myArrow = new Arrow(this, player.x + offset, player.y); // Spawn arrow
-<<<<<<< HEAD
 
 
 
             this.physics.add.overlap(myArrow, slugs, despawn, null, this); // Make the arrow despawn slugs
             this.physics.add.overlap(myArrow, layer, reverseDespawn, null, this); // Make layer despawn the arrow
-=======
-            arrows.push(myArrow);
-            this.physics.add.overlap(myArrow, platforms, reverseDespawn, null, this); // Make platforms despawn the arrow
->>>>>>> 7b37a9187f74e3a86bed71c6ee3fe24f155c9bac
         }
 
         info.x = this.cameras.main.worldView.x + 25;
@@ -405,3 +420,20 @@
 </body>
 
 </html>
+Footer
+© 2022 GitHub, Inc.
+Footer navigation
+
+    Terms
+    Privacy
+    Security
+    Status
+    Docs
+    Contact GitHub
+    Pricing
+    API
+    Training
+    Blog
+    About
+
+You have no unread notifications
