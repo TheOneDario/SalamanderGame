@@ -48,7 +48,7 @@
         {
             super(scene, x, y, 'slug');
             slugs.push(this); // add to list of slugs
-            this.hp = 4;
+            this.hp = 2;
             this.scene.physics.add.overlap(arrows, this, this.takeDamage, null, this); // arrows hurt slugs
             scene.add.existing(this);
             scene.physics.add.existing(this);
