@@ -247,9 +247,10 @@
         this.load.image('arrow', 'assets/arrow.png');
         this.load.image('slime', 'assets/slime.png');
         this.load.image('bullet', 'assets/bullet.png');
+        this.load.image('slime', 'assets/slime.png');
         this.load.image('tileset', 'assets/jungleTileSet.png');
         this.load.atlas('fox', 'assets/Fox_Sprite.png', 'assets/Fox_Sprite.json');
-        this.load.tilemapTiledJSON('tilemap', 'assets/level1.json' );
+        this.load.tilemapTiledJSON('tilemap', 'assets/level1v2.json');
     }
 
     function despawn(despawner, despawnee)
@@ -310,13 +311,6 @@
         //Set the background origin to be at (0, 0) or top left corner of the image rather than the center of the image asset
        let background = this.add.tileSprite(0, 0, game.scale.width, game.scale.height, 'sky').setOrigin(0, 0);
 
-       //adds tileset map
-       map = this.make.tilemap({ key: 'tilemap'});
-       var tileset = map.addTilesetImage('jungleTileSet', 'tileset');
-       var layer = map.createLayer(0, tileset, 0, 0);
-       layer.setCollisionByExclusion([-1]);
-       layer.setScale(1.37);
-
        //Create the layer and the player character set to collide with the layer
        player = new Player(this, 100, 50);
        this.physics.add.collider(player, layer);
@@ -343,7 +337,6 @@
 
 
        this.physics.add.overlap(bullets, layer, reverseDespawn, null, this);
-       //this.physics.add.overlap(arrows, layer, reverseDespawn, null, this);
 
        this.cameras.main.setBounds(0, 0, 700, 700);
        this.cameras.main.startFollow(player, true, 0.08, 0.04);
@@ -450,6 +443,12 @@
             }
 
             myArrow = new Arrow(this, player.x + offset, player.y); // Spawn arrow
+
+
+
+            this.physics.add.overlap(myArrow, slugs, despawn, null, this); // Make the arrow despawn slugs
+            this.physics.add.overlap(myArrow, layer, reverseDespawn, null, this); // Make layer despawn the arrow
+
             arrows.push(myArrow);
         }
 
