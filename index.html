@@ -35,7 +35,7 @@
             super(scene, x, y, 'player');
             scene.add.existing(this);
             scene.physics.add.existing(this);
-            this.setScale(2);
+            this.setScale(1);
             this.setCollideWorldBounds(true);
             this.setGravityY(3000); //We will set gravity *per object* rather than for the scene!
         }
@@ -171,8 +171,9 @@
     var game = new Phaser.Game(config);
 
     //Game Objects
-    var platforms;
+    var layer;
     var player;
+    var map;
 
     //Keyboard controls
     var cursors;
@@ -203,9 +204,9 @@
         this.load.image('wingslug', 'assets/slug.png');
         this.load.image('arrow', 'assets/arrow.png');
         this.load.image('bullet', 'assets/bullet.png');
-        this.load.image('tileset', 'jungleTileSet.png');
         this.load.image('slime', 'assets/slime.png');
-        this.load.tilemapTiledJSON('tilemap', 'level1.json');
+        this.load.image('tileset', 'assets/jungleTileSet.png');
+        this.load.tilemapTiledJSON('tilemap', 'assets/level1.json' );
     }
 
     function despawn(despawner, despawnee)
@@ -266,6 +267,11 @@
         //Set the background origin to be at (0, 0) or top left corner of the image rather than the center of the image asset
        let background = this.add.tileSprite(0, 0, game.scale.width, game.scale.height, 'sky').setOrigin(0, 0);
 
+<<<<<<< HEAD
+       //Create the layer and the player character set to collide with the layer
+       player = new Player(this, 100, 50);
+       this.physics.add.collider(player, layer);
+=======
 
 
 
@@ -273,19 +279,20 @@
        createPlatforms(this);
        player = new Player(this, 400, 400);
        this.physics.add.collider(player, platforms);
+>>>>>>> 7b37a9187f74e3a86bed71c6ee3fe24f155c9bac
        this.physics.add.overlap(player, slugs, CollisionDamage, null, this);
        this.physics.add.overlap(player, bullets, CollisionDeleter, null, this);
 
        info = this.add.text(player.x - 200, player.y + 200, '4', { font: '48px Arial', fill: '#000000' });
 
        slug = new Slug(this, 600, 605.6);
-       this.physics.add.collider(slug, platforms);
+       this.physics.add.collider(slug, layer);
        slug.addTween(this, slug.x + 200, slug.y, 2000);
        slugs.push(slug); // add to list of slugs
 
        wingSlug = new WingSlug(this, 200, 605.6);
        this.physics.add.overlap(wingSlug, player);
-       this.physics.add.collider(wingSlug, platforms);
+       this.physics.add.collider(wingSlug, layer);
        slugs.push(wingSlug); // add to list of winged slugs
 
        //Set up user input
@@ -300,21 +307,18 @@
 
        this.cameras.main.setBounds(0, 0, 10000, 10000);
        this.cameras.main.startFollow(player, true, 0.08, 0.04);
-       this.cameras.main.setZoom(1.3);
+       this.cameras.main.setZoom(2);
+
+       //adds tileset map
+       map = this.make.tilemap({ key: 'tilemap'});
+       var tileset = map.addTilesetImage('jungleTileSet', 'tileset');
+       var layer = map.createLayer(0, tileset, 0, 0);
+       layer.setCollisionByExclusion([-1]);
+       this.physics.add.collider(player, layer);
+       layer.setScale(1.37);
     }
 
 
-    function createPlatforms(scene)
-    {
-        platforms = scene.physics.add.staticGroup();
-
-        //basePlatform is the floor of the game
-        let basePlatform = platforms.create(game.scale.width/2, game.scale.height-30, 'platform');
-        basePlatform.setScale(3, 1).refreshBody(); //scales the base platform in the x axis to cover the entire floor
-
-        platforms.create(250, 350, 'platform'); //creates the upper left platform
-        platforms.create(950, 500, 'platform'); //creates the bottome right platform
-    }
 
     function update(time, delta)
     {
@@ -357,8 +361,16 @@
             }
 
             myArrow = new Arrow(this, player.x + offset, player.y); // Spawn arrow
+<<<<<<< HEAD
+
+
+
+            this.physics.add.overlap(myArrow, slugs, despawn, null, this); // Make the arrow despawn slugs
+            this.physics.add.overlap(myArrow, layer, reverseDespawn, null, this); // Make layer despawn the arrow
+=======
             arrows.push(myArrow);
             this.physics.add.overlap(myArrow, platforms, reverseDespawn, null, this); // Make platforms despawn the arrow
+>>>>>>> 7b37a9187f74e3a86bed71c6ee3fe24f155c9bac
         }
 
         info.x = this.cameras.main.worldView.x + 25;
@@ -377,7 +389,7 @@
 
     function jump(event)
     {
-        if (player.body.touching.down)
+        if (player.body.onFloor())
         {
              currentJumps = MAX_JUMP_COUNT - 1;
             player.setVelocityY(-900); // previously was 1100
