@@ -51,7 +51,7 @@
         constructor(scene, x, y)
         {
             super(scene, x, y, 'slug');
-            this.hp = 5;
+            this.hp = 2;
             this.scene.physics.add.overlap(arrows, this, this.takeDamage, null, this); // Make the arrow despawn slugs
             scene.add.existing(this);
             scene.physics.add.existing(this);
