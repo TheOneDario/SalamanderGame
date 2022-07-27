@@ -46,7 +46,7 @@
         constructor(scene, x, y)
         {
             super(scene, x, y, 'slug');
-            this.hp = 5;
+            this.hp = 4;
             this.scene.physics.add.overlap(arrows, this, this.takeDamage, null, this); // Make the arrow despawn slugs
             scene.add.existing(this);
             scene.physics.add.existing(this);
@@ -164,7 +164,7 @@
             super(scene, x, y, 'arrow');
             scene.add.existing(this);
             scene.physics.add.existing(this);
-            this.setScale(0.8);
+            this.setScale(0.4);
             this.setCollideWorldBounds(false);
 
             if (!facingRight)
@@ -250,7 +250,7 @@
         this.load.image('slime', 'assets/slime.png');
         this.load.image('tileset', 'assets/jungleTileSet.png');
         this.load.atlas('fox', 'assets/Fox_Sprite.png', 'assets/Fox_Sprite.json');
-        this.load.tilemapTiledJSON('tilemap', 'assets/level1v2.json');
+        this.load.tilemapTiledJSON('tilemap', 'assets/lvl1.json');
     }
 
     function despawn(despawner, despawnee)
