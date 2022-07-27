@@ -37,7 +37,7 @@
             scene.physics.add.existing(this);
             this.setScale(1);
             this.setCollideWorldBounds(true);
-            this.setGravityY(3000); //We will set gravity *per object* rather than for the scene!
+            this.setGravityY(2000); //We will set gravity *per object* rather than for the scene!
         }
     }
 
@@ -46,8 +46,9 @@
         constructor(scene, x, y)
         {
             super(scene, x, y, 'slug');
+            slugs.push(this); // add to list of slugs
             this.hp = 4;
-            this.scene.physics.add.overlap(arrows, this, this.takeDamage, null, this); // Make the arrow despawn slugs
+            this.scene.physics.add.overlap(arrows, this, this.takeDamage, null, this); // arrows hurt slugs
             scene.add.existing(this);
             scene.physics.add.existing(this);
             this.setScale(0.2);
@@ -78,7 +79,7 @@
             this.hp--;
             if (this.hp <= 0)
             {
-                despawn(this, this);
+                despawn(this, this);3
             }
         }
 
@@ -106,7 +107,7 @@
     {
           fire(myScene, obj)
           {
-              if (obj.active)
+              if (obj.active && this.aggressive)
               {
                   let myVector = new Phaser.Math.Vector2();
                   myVector.x = player.x - obj.x;
@@ -123,15 +124,19 @@
 
           constructor(scene, x, y)
           {
-             super(scene, x, y, 'wingslug');
-             scene.add.existing(this);
-             scene.physics.add.existing(this);
-             this.setScale(0.2);
-             this.setCollideWorldBounds(true);
-             this.setGravityY(3000);
+              super(scene, x, y, 'wingslug');
+              slugs.push(this); // add to list of slugs
+              this.hp = 4;
+              this.scene.physics.add.overlap(arrows, this, this.takeDamage, null, this); // arrows hurt slugs
+              scene.add.existing(this);
+              scene.physics.add.existing(this);
+              this.setScale(0.2);
+              this.setCollideWorldBounds(true);
+              this.setGravityY(800);
+              this.aggressive = false;
 
              var timer = scene.time.addEvent({
-                  delay: 300,
+                  delay: 400,
                   callback: this.fire,
                   args: [scene, this],
                   callbackScope: scene,
@@ -141,18 +146,25 @@
 
           pathfind()
           {
-                if (this.x < player.x) // If slug is too far left
+                if (this.aggressive)
                 {
-                      this.setVelocityX(50); // Move right
-                }
-                else if (this.x > player.x) // If slug is too far right
-                {
-                      this.setVelocityX(-50); // Move left
-                }
+                    if (this.x < player.x) // If slug is too far left
+                    {
+                          this.setVelocityX(50); // Move right
+                    }
+                    else if (this.x > player.x) // If slug is too far right
+                    {
+                          this.setVelocityX(-50); // Move left
+                    }
 
-                if ((this.y - player.y) > 4) // If more than 4px below player
+                    if ((this.y - player.y) > 4) // If more than 4px below player
+                    {
+                          this.setVelocityY(-100); // Jump
+                    }
+                }
+                else if (Phaser.Math.Distance.Between(player.x, player.y, this.x, this.y) <= 50)
                 {
-                      this.setVelocityY(-100); // Jump
+                    this.aggressive = true;
                 }
           }
     }
@@ -164,7 +176,7 @@
             super(scene, x, y, 'arrow');
             scene.add.existing(this);
             scene.physics.add.existing(this);
-            this.setScale(0.4);
+            this.setScale(1);
             this.setCollideWorldBounds(false);
 
             if (!facingRight)
@@ -246,16 +258,15 @@
         this.load.image('wingslug', 'assets/slug.png');
         this.load.image('arrow', 'assets/arrow.png');
         this.load.image('slime', 'assets/slime.png');
-        this.load.image('bullet', 'assets/bullet.png');
         this.load.image('slime', 'assets/slime.png');
         this.load.image('tileset', 'assets/jungleTileSet.png');
         this.load.atlas('fox', 'assets/Fox_Sprite.png', 'assets/Fox_Sprite.json');
-        this.load.tilemapTiledJSON('tilemap', 'assets/lvl1.json');
+        this.load.tilemapTiledJSON('tilemap', 'assets/level1.json');
     }
 
     function despawn(despawner, despawnee)
     {
-        despawnee.disableBody(true, true); //remove that particuhp--;
+        despawnee.disableBody(true, true); //remove that object
     }
 
     function reverseDespawn(despawnee, despawner)
@@ -305,7 +316,6 @@
 
 
 
-
     function create()
     {
         //Set the background origin to be at (0, 0) or top left corner of the image rather than the center of the image asset
@@ -313,20 +323,31 @@
 
        //Create the layer and the player character set to collide with the layer
        player = new Player(this, 100, 50);
-       this.physics.add.collider(player, layer);
-       this.physics.add.overlap(player, slugs, CollisionDamage, null, this);
-       this.physics.add.overlap(player, bullets, CollisionDeleter, null, this);
+       this.physics.add.collider(player, layer); // make player collide with ground
+       this.physics.add.overlap(player, slugs, CollisionDamage, null, this); // make enemies deal damage
+       this.physics.add.overlap(player, bullets, CollisionDeleter, null, this); // make enemy bullets deal damage then despawn
 
-       info = this.add.text(player.x - 200, player.y + 200, '4', { font: '48px Arial', fill: '#000000' });
+
+       map = this.make.tilemap({ key: 'tilemap'});
+       var tileset = map.addTilesetImage('jungleTileSet', 'tileset');
+       var layer = map.createLayer(0, tileset, 0, 0);
+       layer.setCollisionByExclusion([-1]);
+       this.physics.add.collider(player, layer);
+       layer.setScale(1.37);
+
+       this.physics.add.collider(bullets, layer, reverseDespawn, null, this); // make bullets despawn after hitting tiles
+       this.physics.add.collider(slugs, layer); // make slugs collide with tiles
+       this.physics.add.collider(arrows, layer, reverseDespawn, null, this); // make arrows despawn after hitting tiles
+
+       info = this.add.text(player.x - 200, player.y + 200, '4', { font: '48px Arial', fill: '#000000' }); // set text location
 
        slug = new Slug(this, 307, 560);
-       this.physics.add.collider(slug, layer);
        slugs.push(slug); // add to list of slugs
+       this.physics.add.collider(slug, layer); // make slugs collide with tiles
 
        wingSlug = new WingSlug(this, 200, 605.6);
-       this.physics.add.overlap(wingSlug, player);
-       this.physics.add.collider(wingSlug, layer);
        slugs.push(wingSlug); // add to list of winged slugs
+       this.physics.add.collider(wingSlug, layer); // make slugs collide with tiles
 
        //Set up user input
        cursors = this.input.keyboard.createCursorKeys();
@@ -334,20 +355,11 @@
        space = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
        space.on('down', jump); //calls jump function when space is pressed
 
-
-
-       this.physics.add.overlap(bullets, layer, reverseDespawn, null, this);
-
        this.cameras.main.setBounds(0, 0, 700, 700);
        this.cameras.main.startFollow(player, true, 0.08, 0.04);
        this.cameras.main.setZoom(2.6);
 
-        map = this.make.tilemap({ key: 'tilemap'});
-        var tileset = map.addTilesetImage('jungleTileSet', 'tileset');
-        var layer = map.createLayer(0, tileset, 0, 0);
-        layer.setCollisionByExclusion([-1]);
-        this.physics.add.collider(player, layer);
-        layer.setScale(1.37);
+
 
         this.anims.create({key: 'foxally', frames: this.anims.generateFrameNames('fox', {prefix: 'Fox', end: 4, zeroPad: 1}), repeat: -1});
         fox = new Fox(this, 200, 50, 'fox', 'foxally');
