@@ -355,6 +355,13 @@ History
        this.cameras.main.setBounds(0, 0, 700, 700);
        this.cameras.main.startFollow(player, true, 0.08, 0.04);
        this.cameras.main.setZoom(2.6);
+
+        map = this.make.tilemap({ key: 'tilemap'});
+        var tileset = map.addTilesetImage('jungleTileSet', 'tileset');
+        var layer = map.createLayer(0, tileset, 0, 0);
+        layer.setCollisionByExclusion([-1]);
+        this.physics.add.collider(player, layer);
+        layer.setScale(1.37);
     }
 
 
