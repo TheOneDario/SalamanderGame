@@ -249,6 +249,7 @@
     var layer;
     var player;
     var map;
+    var spikeLayer;
 
     //Keyboard controls
     var cursors;
@@ -281,8 +282,9 @@
         this.load.image('slime', 'assets/slime.png');
         this.load.image('slime', 'assets/slime.png');
         this.load.image('tileset', 'assets/jungleTileSet.png');
+        this.load.image('spikes', 'assets/16-bit-spike-Sheet.png');
         this.load.atlas('fox', 'assets/Fox_Sprite.png', 'assets/Fox_Sprite.json');
-        this.load.tilemapTiledJSON('tilemap', 'assets/level1v2.json');
+        this.load.tilemapTiledJSON('tilemap', 'assets/level1v4.json');
     }
 
     function despawn(despawner, despawnee)
@@ -335,6 +337,16 @@
             hitCooldown = true;
             this.time.delayedCall(500, resetHitCooldown, [], this); // Make cooldown stop in 1 second
             TakeDamage(1);
+        }
+    }
+
+    function CollisionKill(myPlayer, myEnemy)
+    {
+        if (!hitCooldown)
+        {
+            hitCooldown = true;
+            this.time.delayedCall(500, resetHitCooldown, [], this); // Make cooldown stop in 1 second
+            TakeDamage(4);
         }
     }
 
@@ -394,8 +406,21 @@
        this.cameras.main.startFollow(player, true, 0.08, 0.04);
        this.cameras.main.setZoom(2.6);
 
-       this.anims.create({key: 'foxally', frames: this.anims.generateFrameNames('fox', {prefix: 'Fox', end: 4, zeroPad: 1}), repeat: -1});
-       fox = new Fox(this, 210, 124, 'fox', 'foxally');
+        map = this.make.tilemap({ key: 'tilemap'});
+        var tileset = map.addTilesetImage('jungleTileSet', 'tileset');
+        var spikeTileset = map.addTilesetImage('16-bit-spike-Sheet', 'spikes');
+        var layer = map.createLayer('Tile Layer 1', tileset, 0, 0);
+        var spikeLayer = map.createLayer('Spikes', spikeTileset, 0, 0);
+        layer.setCollisionByExclusion([-1]);
+        this.physics.add.collider(player, layer);
+        spikeLayer.setCollisionByExclusion([-1]);
+        //spikes collision
+        this.physics.add.collider(player, spikeLayer, CollisionKill, null, this);
+        layer.setScale(1.37);
+        spikeLayer.setScale(1.37);
+
+        this.anims.create({key: 'foxally', frames: this.anims.generateFrameNames('fox', {prefix: 'Fox', end: 4, zeroPad: 1}), repeat: -1});
+        fox = new Fox(this, 200, 50, 'fox', 'foxally');
 
 
 
