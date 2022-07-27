@@ -342,12 +342,19 @@
        this.cameras.main.startFollow(player, true, 0.08, 0.04);
        this.cameras.main.setZoom(2.6);
 
-       this.anims.create({key: 'foxally', frames: this.anims.generateFrameNames('fox', {prefix: 'Fox', end: 4, zeroPad: 1}), repeat: -1});
-       fox = new Fox(this, 200, 50, 'fox', 'foxally');
+        map = this.make.tilemap({ key: 'tilemap'});
+        var tileset = map.addTilesetImage('jungleTileSet', 'tileset');
+        var layer = map.createLayer(0, tileset, 0, 0);
+        layer.setCollisionByExclusion([-1]);
+        this.physics.add.collider(player, layer);
+        layer.setScale(1.37);
+
+        this.anims.create({key: 'foxally', frames: this.anims.generateFrameNames('fox', {prefix: 'Fox', end: 4, zeroPad: 1}), repeat: -1});
+        fox = new Fox(this, 200, 50, 'fox', 'foxally');
 
 
 
-      createSpeechBubble(180, 210, 200, 50, '“YEAHHHHH WOOOOO!"', this);
+       createSpeechBubble(180, 210, 200, 50, '“YEAHHHHH WOOOOO!"', this);
     }
 
     function createSpeechBubble (x, y, width, height, quote, scene)
