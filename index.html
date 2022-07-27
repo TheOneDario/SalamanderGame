@@ -11,10 +11,10 @@
 <body>
 
     <script>
-    //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
+
     var config = {
         type: Phaser.AUTO,
-        width: 1280,
+        width: 1200,
         height: 700,
         physics: {
             default: 'arcade',
@@ -24,7 +24,8 @@
             preload: preload,
             create: create,
             update: update,
-        }
+            }
+
 
     };
 
@@ -37,7 +38,7 @@
             scene.physics.add.existing(this);
             this.setScale(1);
             this.setCollideWorldBounds(true);
-            this.setGravityY(3000); //We will set gravity *per object* rather than for the scene!
+            this.setGravityY(2000); //We will set gravity *per object* rather than for the scene!
         }
     }
 
@@ -46,8 +47,9 @@
         constructor(scene, x, y)
         {
             super(scene, x, y, 'slug');
-            this.hp = 5;
-            this.scene.physics.add.overlap(arrows, this, this.takeDamage, null, this); // Make the arrow despawn slugs
+            slugs.push(this); // add to list of slugs
+            this.hp = 2;
+            this.scene.physics.add.overlap(arrows, this, this.takeDamage, null, this); // arrows hurt slugs
             scene.add.existing(this);
             scene.physics.add.existing(this);
             this.setScale(0.2);
@@ -83,7 +85,7 @@
         }
 
         pathfind()
-        {
+        {    //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
             if (this.aggressive)
             {
                 if (this.x < player.x) // If slug is too far left
@@ -102,11 +104,11 @@
         }
     }
 
-    class WingSlug extends Slug
+    class WingSlug extends Phaser.Physics.Arcade.Sprite
     {
           fire(myScene, obj)
           {
-              if (obj.active)
+              if (obj.active && this.aggressive)
               {
                   let myVector = new Phaser.Math.Vector2();
                   myVector.x = player.x - obj.x;
@@ -123,15 +125,19 @@
 
           constructor(scene, x, y)
           {
-             super(scene, x, y, 'wingslug');
-             scene.add.existing(this);
-             scene.physics.add.existing(this);
-             this.setScale(0.2);
-             this.setCollideWorldBounds(true);
-             this.setGravityY(3000);
+              super(scene, x, y, 'wingSlug');
+              slugs.push(this); // add to list of slugs
+              this.hp = 4;
+              this.scene.physics.add.overlap(arrows, this, this.takeDamage, null, this); // arrows hurt slugs
+              scene.add.existing(this);
+              scene.physics.add.existing(this);
+              this.setScale(0.2);
+              this.setCollideWorldBounds(true);
+              this.setGravityY(800);
+              this.aggressive = false;
 
              var timer = scene.time.addEvent({
-                  delay: 300,
+                  delay: 400,
                   callback: this.fire,
                   args: [scene, this],
                   callbackScope: scene,
@@ -139,47 +145,63 @@
               });
           }
 
+          takeDamage(myArrow, me)
+          {
+              this.aggressive = true;
+
+              if (myArrow.movingRight)
+              {
+                  this.x+= 8;
+              }
+              else
+              {
+                  this.x -= 8;
+              }
+
+              reverseDespawn(myArrow, me);
+              this.hp--;
+              if (this.hp <= 0)
+              {
+                  despawn(this, this);
+              }
+          }
+
           pathfind()
           {
-                if (this.x < player.x) // If slug is too far left
+                if (this.aggressive)
                 {
-                      this.setVelocityX(50); // Move right
+                    if (this.x < player.x) // If slug is too far left
+                    {
+                          this.setVelocityX(50); // Move right
+                    }
+                    else if (this.x > player.x) // If slug is too far right
+                    {
+                          this.setVelocityX(-50); // Move left
+                    }
+                    if ((this.y - player.y) > 4) // If more than 4px below player
+                    {
+                          this.setVelocityY(-100); // Jump
+                    }
                 }
-                else if (this.x > player.x) // If slug is too far right
+                else if (Phaser.Math.Distance.Between(player.x, player.y, this.x, this.y) <= 50)
                 {
-                      this.setVelocityX(-50); // Move left
-                }
-
-                if ((this.y - player.y) > 4) // If more than 4px below player
-                {
-                      this.setVelocityY(-100); // Jump
+                    this.aggressive = true;
                 }
           }
-    }
+      }
 
-    class Arrow extends Phaser.Physics.Arcade.Sprite
-    {
-        constructor (scene, x, y)
-        {
-            super(scene, x, y, 'arrow');
+      class Fox extends Phaser.Physics.Arcade.Sprite
+      {
+          constructor(scene, x, y, spritesheet, animation)
+          {
+            super(scene, x, y, spritesheet, animation);
             scene.add.existing(this);
             scene.physics.add.existing(this);
-            this.setScale(0.8);
-            this.setCollideWorldBounds(false);
-
-            if (!facingRight)
-            {
-                this.setFlip(true, false);
-                this.setVelocityX(-400);
-                this.movingRight = false;
-            }
-            else
-            {
-                this.setVelocityX(400);
-                this.movingRight = true;
-            }
-        }
-    }
+            this.setScale(2);
+            this.setCollideWorldBounds(true);
+            this.play(animation);
+          }
+      }
 
     class Slime extends Phaser.Physics.Arcade.Sprite
     {
@@ -194,16 +216,27 @@
         }
     }
 
-    class Fox extends Phaser.Physics.Arcade.Sprite
+    class Arrow extends Phaser.Physics.Arcade.Sprite
     {
-        constructor(scene, x, y, spritesheet, animation)
+        constructor (scene, x, y)
         {
-          super(scene, x, y, spritesheet, animation);
-          scene.add.existing(this);
-          scene.physics.add.existing(this);
-          this.setScale(2);
-          this.setCollideWorldBounds(true);
-          this.play(animation);
+            super(scene, x, y, 'arrow');
+            scene.add.existing(this);
+            scene.physics.add.existing(this);
+            this.setScale(1);
+            this.setCollideWorldBounds(false);
+3
+            if (!facingRight)
+            {
+                this.setFlip(true, false);
+                this.setVelocityX(-400);
+                this.movingRight = false;
+            }
+            else
+            {
+                this.setVelocityX(400);
+                this.movingRight = true;
+            }
         }
     }
 
@@ -236,7 +269,6 @@
     var arrows = [];
     var bullets = [];
     var bubbles = [];
-    var wingSlugs = [];
 
     function preload()
     {
@@ -244,10 +276,9 @@
         this.load.image('platform', 'assets/platform.png');
         this.load.image('player', 'assets/wabbit.png');
         this.load.image('slug', 'assets/slug.png');
-        this.load.image('wingslug', 'assets/slug.png');
+        this.load.image('wingSlug', 'assets/slug.png');
         this.load.image('arrow', 'assets/arrow.png');
         this.load.image('slime', 'assets/slime.png');
-        this.load.image('bullet', 'assets/bullet.png');
         this.load.image('slime', 'assets/slime.png');
         this.load.image('tileset', 'assets/jungleTileSet.png');
         this.load.image('spikes', 'assets/16-bit-spike-Sheet.png');
@@ -257,13 +288,14 @@
 
     function despawn(despawner, despawnee)
     {
-        despawnee.disableBody(true, true); //remove that particuhp--;
+        despawnee.disableBody(true, true); //remove that object
     }
 
     function reverseDespawn(despawnee, despawner)
     {
-        despawnee.disableBody(true, true);
+        despawnee.disableBody(true, true); //remove that object
     }
+
     // Music credit: Music by Marllon Silva (xDeviruchi)
 
     /**
@@ -305,18 +337,12 @@
         }
     }
 
-    function  TakeDamage(amount)
+    function TakeDamage(amount)
     {
         hp -= amount;
         info.setText(hp);
         console.log(hp);
     }
-
-
-
-
-
-
 
     function create()
     {
@@ -325,30 +351,36 @@
 
        //Create the layer and the player character set to collide with the layer
        player = new Player(this, 100, 50);
-       this.physics.add.collider(player, layer);
-       this.physics.add.overlap(player, slugs, CollisionDamage, null, this);
-       this.physics.add.overlap(player, bullets, CollisionDeleter, null, this);
+       player.setDepth(1);
+       this.physics.add.overlap(player, slugs, CollisionDamage, null, this); // make enemies deal damage
+       this.physics.add.overlap(player, bullets, CollisionDeleter, null, this); // make enemy bullets deal damage then despawn
 
-       info = this.add.text(player.x - 200, player.y + 200, '4', { font: '48px Arial', fill: '#000000' });
+
+       map = this.make.tilemap({ key: 'tilemap'});
+       var tileset = map.addTilesetImage('jungleTileSet', 'tileset');
+       var layer = map.createLayer(0, tileset, 0, 0);
+       layer.setCollisionByExclusion([-1]);
+       layer.setScale(1.37);
+       this.physics.add.collider(player, layer); // make player collide with ground
+       this.physics.add.collider(bullets, layer, reverseDespawn, null, this); // make bullets despawn after hitting tiles
+       this.physics.add.collider(slugs, layer); // make slugs collide with tiles
+       this.physics.add.collider(arrows, layer, reverseDespawn, null, this); // make arrows despawn after hitting tiles
+
+       info = this.add.text(player.x - 200, player.y + 200, '4', { font: '48px Arial', fill: '#000000' }); // set text location
 
        slug = new Slug(this, 307, 560);
-       this.physics.add.collider(slug, layer);
        slugs.push(slug); // add to list of slugs
+       this.physics.add.collider(slug, layer); // make slugs collide with tiles
 
        wingSlug = new WingSlug(this, 200, 605.6);
-       this.physics.add.overlap(wingSlug, player);
-       this.physics.add.collider(wingSlug, layer);
        slugs.push(wingSlug); // add to list of winged slugs
+       this.physics.add.collider(wingSlug, layer);
 
        //Set up user input
        cursors = this.input.keyboard.createCursorKeys();
        keys = this.input.keyboard.addKeys('A, D');
        space = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
        space.on('down', jump); //calls jump function when space is pressed
-
-
-
-       this.physics.add.overlap(bullets, layer, reverseDespawn, null, this);
 
        this.cameras.main.setBounds(0, 0, 700, 700);
        this.cameras.main.startFollow(player, true, 0.08, 0.04);
@@ -372,61 +404,62 @@
 
 
 
-       createSpeechBubble(180, 210, 200, 50, '“YEAHHHHH WOOOOO!"', this);
+       createSpeechBubble(210, 50, 140, 50, '“YEAHHHHH WOOOOO!"', this);
+   }
+
+
+       function createSpeechBubble (x, y, width, height, quote, scene)
+       {
+           var bubbleWidth = width;
+           var bubbleHeight = height;
+           var bubblePadding = 10;
+           var arrowHeight = bubbleHeight / 4;
+
+           var bubble = scene.add.graphics({ x: x, y: y });
+
+           //  Bubble shadow
+           bubble.fillStyle(0x222222, 0.5);
+           bubble.fillRoundedRect(6, 6, bubbleWidth, bubbleHeight, 16);
+
+           //  Bubble color
+           bubble.fillStyle(0xffffff, 1);
+
+           //  Bubble outline line style
+           bubble.lineStyle(4, 0x565656, 1);
+
+           //  Bubble shape and outline
+           bubble.strokeRoundedRect(0, 0, bubbleWidth, bubbleHeight, 16);
+           bubble.fillRoundedRect(0, 0, bubbleWidth, bubbleHeight, 16);
+
+           //  Calculate arrow coordinates
+           var point1X = Math.floor(bubbleWidth / 7);
+           var point1Y = bubbleHeight;
+           var point2X = Math.floor((bubbleWidth / 7) * 2);
+
+           var point2Y = bubbleHeight;
+           var point3X = Math.floor(bubbleWidth / 7);
+           var point3Y = Math.floor(bubbleHeight + arrowHeight);
+
+
+           //  Bubble arrow shadow
+           bubble.lineStyle(4, 0x222222, 0.5);
+           bubble.lineBetween(point2X - 1, point2Y + 6, point3X + 2, point3Y);
+
+           //  Bubble arrow fill
+           bubble.fillTriangle(point1X, point1Y, point2X, point2Y, point3X, point3Y);
+           bubble.lineStyle(2, 0x565656, 1);
+           bubble.lineBetween(point2X, point2Y, point3X, point3Y);
+           bubble.lineBetween(point1X, point1Y, point3X, point3Y);
+
+           var content = scene.add.text(0, 0, quote, { fontFamily: 'Arial', fontSize: 20, color: '#000000', align: 'center', wordWrap: { width: bubbleWidth - (bubblePadding * 2) } });
+
+           var b = content.getBounds();
+
+           content.setPosition(bubble.x + (bubbleWidth / 2) - (b.width / 2), bubble.y + (bubbleHeight / 2) - (b.height / 2));
+
     }
 
-    function createSpeechBubble (x, y, width, height, quote, scene)
-    {
-        var bubbleWidth = width;
-        var bubbleHeight = height;
-        var bubblePadding = 10;
-        var arrowHeight = bubbleHeight / 4;
-
-        var bubble = scene.add.graphics({ x: x, y: y });
-
-        //  Bubble shadow
-        bubble.fillStyle(0x222222, 0.5);
-        bubble.fillRoundedRect(6, 6, bubbleWidth, bubbleHeight, 16);
-
-        //  Bubble color
-        bubble.fillStyle(0xffffff, 1);
-
-        //  Bubble outline line style
-        bubble.lineStyle(4, 0x565656, 1);
-
-        //  Bubble shape and outline
-        bubble.strokeRoundedRect(0, 0, bubbleWidth, bubbleHeight, 16);
-        bubble.fillRoundedRect(0, 0, bubbleWidth, bubbleHeight, 16);
-
-        //  Calculate arrow coordinates
-        var point1X = Math.floor(bubbleWidth / 7);
-        var point1Y = bubbleHeight;
-        var point2X = Math.floor((bubbleWidth / 7) * 2);
-        var point2Y = bubbleHeight;
-        var point3X = Math.floor(bubbleWidth / 7);
-        var point3Y = Math.floor(bubbleHeight + arrowHeight);
-
-
-        //  Bubble arrow shadow
-        bubble.lineStyle(4, 0x222222, 0.5);
-        bubble.lineBetween(point2X - 1, point2Y + 6, point3X + 2, point3Y);
-
-        //  Bubble arrow fill
-        bubble.fillTriangle(point1X, point1Y, point2X, point2Y, point3X, point3Y);
-        bubble.lineStyle(2, 0x565656, 1);
-        bubble.lineBetween(point2X, point2Y, point3X, point3Y);
-        bubble.lineBetween(point1X, point1Y, point3X, point3Y);
-
-        var content = scene.add.text(0, 0, quote, { fontFamily: 'Arial', fontSize: 20, color: '#000000', align: 'center', wordWrap: { width: bubbleWidth - (bubblePadding * 2) } });
-
-        var b = content.getBounds();
-
-        content.setPosition(bubble.x + (bubbleWidth / 2) - (b.width / 2), bubble.y + (bubbleHeight / 2) - (b.height / 2));
-
-      }
-
-
-    function update(time, delta)
+    function update()
     {
       console.log(player.x + ", " + player.y);
         //Player will not move in the x-axis unless a movement key is being pressed
@@ -448,9 +481,9 @@
             player.setVelocityX(200);
         }
 
-        for (let i = 0; i < slugs.length; i-=-1) // For each winged slug
+        for (let i = 0; i < slugs.length; i++) // For each slug
         {
-              slugs[i].pathfind(); // Make each wing slug move towards player
+              slugs[i].pathfind(); // Make each slug move towards player
         }
 
         if (cursors.up.isDown && !cooldown)
@@ -468,12 +501,6 @@
             }
 
             myArrow = new Arrow(this, player.x + offset, player.y); // Spawn arrow
-
-
-
-            this.physics.add.overlap(myArrow, slugs, despawn, null, this); // Make the arrow despawn slugs
-            this.physics.add.overlap(myArrow, layer, reverseDespawn, null, this); // Make layer despawn the arrow
-
             arrows.push(myArrow);
         }
 
@@ -503,6 +530,11 @@
             currentJumps--;
             player.setVelocityY(-700);
        }
+
+       function create ()
+{
+
+}
     }
 
     </script>
