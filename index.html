@@ -70,7 +70,7 @@
 
             if (myArrow.movingRight)
             {
-                this.x+= 8;
+                this.x += 8;
             }
             else
             {
@@ -87,7 +87,7 @@
 
         pathfind()
         {    //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
-            if (this.aggressive)
+            if (this.aggressive &&  Phaser.Math.Difference(this.x, player.x) >= 5)
             {
                 if (this.x < player.x) // If slug is too far left
                 {
@@ -98,7 +98,7 @@
                       this.setVelocityX(-50); // Move left
                 }
             }
-            else if (Phaser.Math.Distance.Between(player.x, player.y, this.x, this.y) <= 50)
+            else if (Phaser.Math.Distance.Between(player.x, player.y, this.x, this.y) <= 0 || Phaser.Math.Difference(this.y, player.y) <= 30)
             {
                 this.aggressive = true;
             }
@@ -109,7 +109,7 @@
     {
           fire(myScene, obj)
           {
-              if (obj.active && this.aggressive)
+              if (obj.active && obj.aggressive)
               {
                   let myVector = new Phaser.Math.Vector2();
                   myVector.x = player.x - obj.x;
@@ -134,22 +134,21 @@
               scene.physics.add.existing(this);
               this.setScale(0.2);
               this.setCollideWorldBounds(true);
-              this.setGravityY(800);
+              this.setGravityY(0);
               this.aggressive = false;
 
-             var timer = scene.time.addEvent({
-                  delay: 400,
-                  callback: this.fire,
-                  args: [scene, this],
-                  callbackScope: scene,
-                  loop: true
-              });
+               var timer = scene.time.addEvent({
+                    delay: 400,
+                    callback: this.fire,
+                    args: [scene, this],
+                    callbackScope: scene,
+                    loop: true
+                });
           }
 
           takeDamage(myArrow, me)
           {
               this.aggressive = true;
-
               if (myArrow.movingRight)
               {
                   this.x+= 8;
@@ -169,7 +168,7 @@
 
           pathfind()
           {
-                if (this.aggressive)
+                if (this.aggressive &&  Phaser.Math.Difference(this.x, player.x) >= 5)
                 {
                     if (this.x < player.x) // If slug is too far left
                     {
@@ -184,9 +183,10 @@
                           this.setVelocityY(-100); // Jump
                     }
                 }
-                else if (Phaser.Math.Distance.Between(player.x, player.y, this.x, this.y) <= 50)
+                else if (Phaser.Math.Distance.Between(player.x, player.y, this.x, this.y) <= 0 || Phaser.Math.Difference(this.y, player.y) <= 30)
                 {
                     this.aggressive = true;
+                    this.setGravityY(800);
                 }
           }
       }
@@ -214,6 +214,14 @@
             this.setScale(0.02);
             this.setCollideWorldBounds(false);
             this.setVelocity(xSpeed, ySpeed);
+
+            var timer = scene.time.addEvent({
+                 delay: 5000,
+                 callback: despawn,
+                 args: [this, this],
+                 callbackScope: scene,
+                 loop: true
+             });
         }
     }
 
@@ -238,6 +246,14 @@
                 this.setVelocityX(400);
                 this.movingRight = true;
             }
+
+            var timer = scene.time.addEvent({
+                 delay: 5000,
+                 callback: despawn,
+                 args: [this, this],
+                 callbackScope: scene,
+                 loop: true
+             });
         }
     }
 
@@ -280,7 +296,6 @@
         this.load.image('wingSlug', 'assets/slug.png');
         this.load.image('arrow', 'assets/arrow.png');
         this.load.image('slime', 'assets/slime.png');
-        this.load.image('slime', 'assets/slime.png');
         this.load.image('tileset', 'assets/jungleTileSet.png');
         this.load.image('spikes', 'assets/16-bit-spike-Sheet.png');
         this.load.atlas('fox', 'assets/Fox_Sprite.png', 'assets/Fox_Sprite.json');
@@ -302,19 +317,16 @@
         switch(type)
         {
             case 0:
-                slug = new Slug(scene, x, y);
+                let slug = new Slug(scene, x, y);
                 slugs.push(slug); // add to list of slugs
                 scene.physics.add.collider(slug, layer); // make slugs collide with tiles
                 break;
             case 1:
-                wingSlug = new WingSlug(scene, x, y);
+                let wingSlug = new WingSlug(scene, x, y);
                 slugs.push(wingSlug); // add to list of winged slugs
                 scene.physics.add.collider(wingSlug, layer);
                 break;
             default:
-                slug = new Slug(this, x, y);
-                slugs.push(slug); // add to list of slugs
-                scene.physics.add.collider(slug, layer); // make slugs collide with tiles
                 break;
         }
     }
@@ -400,6 +412,7 @@
 
        createSlug(307, 560, 0, this);
        createSlug(200, 605.6, 1, this);
+       createSlug(330, 314, 1, this);
 
        info = this.add.text(player.x - 200, player.y + 200, '4', { font: '48px Arial', fill: '#000000' }); // set text location
 
@@ -410,8 +423,8 @@
        space.on('down', jump); //calls jump function when space is pressed
 
        this.cameras.main.setBounds(0, 0, 700, 700);
-       this.cameras.main.startFollow(player, true, 0.08, 0.04);
-       this.cameras.main.setZoom(2.6);
+       this.cameras.main.startFollow(player, true, 0.08, 0.08);
+       this.cameras.main.setZoom(2.3);
 
        this.anims.create({key: 'foxally', frames: this.anims.generateFrameNames('fox', {prefix: 'Fox', end: 4, zeroPad: 1}), repeat: -1});
        fox = new Fox(this, 210, 124, 'fox', 'foxally');
@@ -473,10 +486,14 @@
 
     function update()
     {
-      console.log(player.x + ", " + player.y);
+        console.log(player.x + ", " + player.y);
         //Player will not move in the x-axis unless a movement key is being pressed
         player.setVelocityX(0);
 
+        if (player.body.onFloor())
+        {
+            currentJumps = MAX_JUMP_COUNT;
+        }
         //Player has "drag" on the x-axis meaning they slide a bit after an input
         player.setDragX(1000);
 
@@ -534,14 +551,14 @@
     {
         if (player.body.onFloor())
         {
-             currentJumps = MAX_JUMP_COUNT - 1;
+            currentJumps = MAX_JUMP_COUNT - 1;
             player.setVelocityY(-player.jumpHeight); // previously was 1100
         }
         else if (currentJumps > 0)
         {
             currentJumps--;
             player.setVelocityY(-player.jumpHeight * 0.8);
-       }
+        }
 
        function create ()
 {
