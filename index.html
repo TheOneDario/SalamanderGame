@@ -5,7 +5,7 @@
 </head>
 <body>
     <script>
-    //test comment
+
     var config = {
         type: Phaser.AUTO,
         width: 1200,
@@ -44,7 +44,7 @@
             this.scene.physics.add.overlap(arrows, this, this.takeDamage, null, this); // arrows hurt slugs
             scene.add.existing(this);
             scene.physics.add.existing(this);
-            this.setScale(0.2);
+            this.setScale(1.35);
             this.setCollideWorldBounds(true);
             this.setGravityY(3000);
             this.aggressive = false;
