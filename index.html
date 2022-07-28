@@ -5,6 +5,7 @@
 </head>
 <body>
     <script>
+
     var config = {
         type: Phaser.AUTO,
         width: 1200,
@@ -20,14 +21,17 @@
     };
     class Player extends Phaser.Physics.Arcade.Sprite
     {
-        constructor(scene, x, y)
+        constructor(scene, x, y, spritesheet, _animation, _animationIdle)
         {
-            super(scene, x, y, 'player');
+            super(scene, x, y, spritesheet, _animation, _animationIdle);
             scene.add.existing(this);
             scene.physics.add.existing(this);
-            this.setScale(1);
+            this.animationIdle = _animationIdle;
+            this.animation = _animation;
+            this.setScale(0.6);
             this.setCollideWorldBounds(true);
             this.setGravityY(2000); //We will set gravity *per object* rather than for the scene!
+            this.play(_animation);
             this.jumpHeight = 553;
         }
     }
@@ -41,7 +45,7 @@
             this.scene.physics.add.overlap(arrows, this, this.takeDamage, null, this); // arrows hurt slugs
             scene.add.existing(this);
             scene.physics.add.existing(this);
-            this.setScale(0.2);
+            this.setScale(1.35);
             this.setCollideWorldBounds(true);
             this.setGravityY(3000);
             this.aggressive = false;
@@ -118,7 +122,7 @@
               this.aggressive = false;
 
                var timer = scene.time.addEvent({
-                    delay: 400,
+                    delay: 600,
                     callback: this.fire,
                     args: [scene, this],
                     callbackScope: scene,
@@ -174,7 +178,7 @@
             super(scene, x, y, spritesheet, animation);
             scene.add.existing(this);
             scene.physics.add.existing(this);
-            this.setScale(2);
+            this.setScale(1.6);
             this.setCollideWorldBounds(true);
             this.play(animation);
           }
@@ -258,7 +262,7 @@
     {
         this.load.image('sky', 'assets/bg.png');
         this.load.image('platform', 'assets/platform.png');
-        this.load.image('player', 'assets/wabbit.png');
+        this.load.atlas('player', 'assets/sally.png', 'assets/sally.json');
         this.load.image('slug', 'assets/slug.png');
         this.load.image('wingSlug', 'assets/redslug.png');
         this.load.image('arrow', 'assets/arrow.png');
@@ -349,7 +353,10 @@
        let background = this.add.tileSprite(0, 0, game.scale.width, game.scale.height, 'sky').setOrigin(0, 0);
        currentScene = this.scene;
        //Create the layer and the player character set to collide with the layer
-       player = new Player(this, 100, 50);
+       this.anims.create({key: 'player_animation', frames: this.anims.generateFrameNames('player', {prefix: 'Sal', end: 6, zeroPad: 1}), repeat: -1, frameRate: 17});
+       this.anims.create({key: 'player_idle', frames: this.anims.generateFrameNames('player', {prefix: 'Sal', end: 6, zeroPad: 1}), repeat: -1, frameRate: 0});
+
+       player = new Player(this, 100, 50, "player", "player_animation", "player_idle");
        player.setDepth(1);
 
        this.physics.add.collider(slugs, slugs);
@@ -375,7 +382,11 @@
        this.physics.add.collider(slugs, layer); // make slugs collide with tiles
        this.physics.add.collider(arrows, layer, reverseDespawn, null, this); // make arrows despawn after hitting tiles
 
+       createSlug(243, 525, 1, this);
+       createSlug(330, 314, 1, this);
+
        info = this.add.text(player.x - 200, player.y + 200, '4', { font: '48px Arial', fill: '#ff0000' }); // set text location
+       info.setDepth(1);
 
        //Set up user input
        cursors = this.input.keyboard.createCursorKeys();
@@ -387,7 +398,7 @@
        this.cameras.main.startFollow(player, true, 0.08, 0.08);
        this.cameras.main.setZoom(2.3);
 
-       this.anims.create({key: 'foxally', frames: this.anims.generateFrameNames('fox', {prefix: 'Fox', end: 4, zeroPad: 1}), repeat: -1});
+       this.anims.create({key: 'foxally', frames: this.anims.generateFrameNames('fox', {prefix: 'Fox', end: 4, zeroPad: 1}), repeat: -1, frameRate: 8});
        fox = new Fox(this, 210, 124, 'fox', 'foxally');
 
        this.anims.create({key: 'foxally', frames: this.anims.generateFrameNames('fox', {prefix: 'Fox', end: 4, zeroPad: 1}), repeat: -1});
@@ -449,13 +460,23 @@
         if (cursors.left.isDown || keys.A.isDown)
         {
             facingRight = false;
+            player.setFlip(false, false);
             player.setVelocityX(-200);
         }
         if (cursors.right.isDown || keys.D.isDown)
         {
             facingRight = true;
+            player.setFlip(true, false);
             player.setVelocityX(200);
         }
+
+
+        if (!cursors.left.isDown && !keys.A.isDown && !cursors.right.isDown && !keys.D.isDown)
+        {
+            player.play(player.animation);
+        }
+
+
         for (let i = 0; i < slugs.length; i++) // For each slug
         {
               slugs[i].pathfind(); // Make each slug move towards player
