@@ -389,8 +389,9 @@
        this.physics.add.collider(slugs, layer); // make slugs collide with tiles
        this.physics.add.collider(arrows, layer, reverseDespawn, null, this); // make arrows despawn after hitting tiles
 
-       createSlug(243, 525, 1, this);
-       createSlug(330, 314, 1, this);
+       createSlug(240, 530, 0, this);
+       createSlug(530, 530, 0, this);
+
        info = this.add.text(player.x - 200, player.y + 200, '4', { font: '48px Arial', fill: '#ff0000' }); // set text location
        info.setDepth(1);
 
