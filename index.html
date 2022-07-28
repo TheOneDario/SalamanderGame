@@ -60,11 +60,11 @@
             this.aggressive = true;
             if (myArrow.movingRight)
             {
-                this.x += 8;
+                this.x += 4;
             }
             else
             {
-                this.x -= 8;
+                this.x -= 4;
             }
             reverseDespawn(myArrow, me);
             this.hp--;
@@ -301,7 +301,7 @@
         target.tint = 0xff5353;
 
         var timer = theGame.time.addEvent({
-             delay: 400,
+             delay: 350,
              callback: turnWhite,
              args: [target],
              callbackScope: currentScene,
@@ -408,10 +408,10 @@
        this.anims.create({key: 'foxally', frames: this.anims.generateFrameNames('fox', {prefix: 'Fox', end: 4, zeroPad: 1}), repeat: -1, frameRate: 8});
        fox = new Fox(this, 210, 124, 'fox', 'foxally');
 
-       this.anims.create({key: 'foxally', frames: this.anims.generateFrameNames('fox', {prefix: 'Fox', end: 4, zeroPad: 1}), repeat: -1});
-       fox2 = new Fox(this, 530, 190, 'fox', 'foxally');
+       this.anims.create({key: 'foxally', frames: this.anims.generateFrameNames('fox', {prefix: 'Fox', end: 4, zeroPad: 1}), repeat: -1, frameRate: 8});
+       fox2 = new Fox(this, 126, 402, 'fox', 'foxally');
 
-       createSpeechBubble(530, 115, 140, 50, '“kill the slugs pls <3"', this);
+       createSpeechBubble(125, 232, 70, 125, '“kill the slugs pls <3"', this);
        createSpeechBubble(190, 30, 300, 70, "arrows keys to move, space to jump or double jump, up arrow to shoot <3", this);
      }
 
@@ -513,7 +513,7 @@
         if (cursors.up.isDown && !cooldown)
         {
             cooldown = true; // Turn on arrow cooldown
-            this.time.delayedCall(1000, resetCooldown, [], this); // Make cooldown stop in 1000ms
+            this.time.delayedCall(700, resetCooldown, [], this); // Make cooldown stop in 1000ms
             let offset = 30;
             if (facingRight)
             {
