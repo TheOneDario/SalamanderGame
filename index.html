@@ -31,14 +31,16 @@
 
     class Player extends Phaser.Physics.Arcade.Sprite
     {
-        constructor(scene, x, y)
+        constructor(scene, x, y, spritesheet, animation)
         {
-            super(scene, x, y, 'player');
+            super(scene, x, y, spritesheet, animation);
             scene.add.existing(this);
             scene.physics.add.existing(this);
-            this.setScale(1);
+            this.setScale(0.6);
             this.setCollideWorldBounds(true);
             this.setGravityY(2000); //We will set gravity *per object* rather than for the scene!
+            this.play(animation);
+            //Something wrong with sally import
         }
     }
 
@@ -225,7 +227,7 @@
             scene.physics.add.existing(this);
             this.setScale(1);
             this.setCollideWorldBounds(false);
-3
+
             if (!facingRight)
             {
                 this.setFlip(true, false);
@@ -239,6 +241,8 @@
             }
         }
     }
+
+
 
 
 
@@ -273,7 +277,7 @@
     {
         this.load.image('sky', 'assets/bg.png');
         this.load.image('platform', 'assets/platform.png');
-        this.load.image('player', 'assets/wabbit.png');
+        this.load.atlas('player', 'assets/sally.png', 'assets/sally.json');
         this.load.image('slug', 'assets/slug.png');
         this.load.image('wingSlug', 'assets/slug.png');
         this.load.image('arrow', 'assets/arrow.png');
@@ -282,6 +286,7 @@
         this.load.image('tileset', 'assets/jungleTileSet.png');
         this.load.atlas('fox', 'assets/Fox_Sprite.png', 'assets/Fox_Sprite.json');
         this.load.tilemapTiledJSON('tilemap', 'assets/level1.json');
+
     }
 
     function despawn(despawner, despawnee)
@@ -338,7 +343,10 @@
        let background = this.add.tileSprite(0, 0, game.scale.width, game.scale.height, 'sky').setOrigin(0, 0);
 
        //Create the layer and the player character set to collide with the layer
-       player = new Player(this, 100, 50);
+       this.anims.create({key: 'player_animation', frames: this.anims.generateFrameNames('player', {prefix: 'Sal', end: 6, zeroPad: 1}), repeat: -1, frameRate: 8});
+
+
+       player = new Player(this, 100, 50, "player", "player_animation");
        player.setDepth(1);
        this.physics.add.overlap(player, slugs, CollisionDamage, null, this); // make enemies deal damage
        this.physics.add.overlap(player, bullets, CollisionDeleter, null, this); // make enemy bullets deal damage then despawn
@@ -374,7 +382,7 @@
        this.cameras.main.startFollow(player, true, 0.08, 0.04);
        this.cameras.main.setZoom(2.6);
 
-       this.anims.create({key: 'foxally', frames: this.anims.generateFrameNames('fox', {prefix: 'Fox', end: 4, zeroPad: 1}), repeat: -1});
+       this.anims.create({key: 'foxally', frames: this.anims.generateFrameNames('fox', {prefix: 'Fox', end: 4, zeroPad: 1}), repeat: -1, frameRate: 8});
        fox = new Fox(this, 210, 124, 'fox', 'foxally');
 
 
@@ -447,12 +455,14 @@
         if (cursors.left.isDown || keys.A.isDown)
         {
             facingRight = false;
+            player.setFlip(false, false);
             player.setVelocityX(-200);
         }
 
         if (cursors.right.isDown || keys.D.isDown)
         {
             facingRight = true;
+            player.setFlip(true, false);
             player.setVelocityX(200);
         }
 
