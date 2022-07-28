@@ -261,7 +261,7 @@
         this.load.image('sky', 'assets/bg.png');
         this.load.image('platform', 'assets/platform.png');
         this.load.atlas('player', 'assets/sally.png', 'assets/sally.json');
-        this.load.image('slug', 'assets/slug.png');
+        this.load.image('slug', 'assets/slug1.png');
         this.load.image('wingSlug', 'assets/redslug.png');
         this.load.image('arrow', 'assets/arrow.png');
         this.load.image('slime', 'assets/slime.png');
@@ -374,9 +374,10 @@
        this.physics.add.collider(slugs, layer); // make slugs collide with tiles
        this.physics.add.collider(arrows, layer, reverseDespawn, null, this); // make arrows despawn after hitting tiles
 
-       createSlug(307, 560, 0, this);
-       createSlug(200, 605.6, 1, this);
-       createSlug(330, 314, 1, this);
+       createSlug(330, 50, 0, this);
+       createSlug(430, 25, 0, this);
+       createSlug(240, 530, 0, this);
+       createSlug(530, 530, 0, this);
 
        info = this.add.text(player.x - 200, player.y + 200, '4', { font: '48px Arial', fill: '#000000' }); // set text location
        info.setDepth(1);
