@@ -1,0 +1,190 @@
+{
+  "frames": [
+    {
+      "filename": "Sal2",
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 36,
+        "h": 52
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 4,
+        "y": 3,
+        "w": 36,
+        "h": 52
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 55
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "filename": "Sal5",
+      "frame": {
+        "x": 2,
+        "y": 58,
+        "w": 32,
+        "h": 52
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 5,
+        "y": 3,
+        "w": 32,
+        "h": 52
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 55
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "filename": "Sal6",
+      "frame": {
+        "x": 2,
+        "y": 114,
+        "w": 32,
+        "h": 51
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 7,
+        "y": 4,
+        "w": 32,
+        "h": 51
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 55
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "filename": "Sal3",
+      "frame": {
+        "x": 2,
+        "y": 169,
+        "w": 34,
+        "h": 50
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 4,
+        "y": 5,
+        "w": 34,
+        "h": 50
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 55
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "filename": "Sal1",
+      "frame": {
+        "x": 38,
+        "y": 58,
+        "w": 32,
+        "h": 50
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 6,
+        "y": 5,
+        "w": 32,
+        "h": 50
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 55
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "filename": "Sal0",
+      "frame": {
+        "x": 42,
+        "y": 2,
+        "w": 30,
+        "h": 50
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 6,
+        "y": 5,
+        "w": 30,
+        "h": 50
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 55
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "filename": "Sal4",
+      "frame": {
+        "x": 38,
+        "y": 112,
+        "w": 30,
+        "h": 50
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 6,
+        "y": 5,
+        "w": 30,
+        "h": 50
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 55
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    }
+  ],
+  "meta": {
+    "app": "http://free-tex-packer.com",
+    "version": "0.6.7",
+    "image": "sally.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 74,
+      "h": 221
+    },
+    "scale": 1
+  }
+}
