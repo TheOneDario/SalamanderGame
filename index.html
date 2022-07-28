@@ -373,6 +373,7 @@
        createSlug(330, 314, 1, this);
 
        info = this.add.text(player.x - 200, player.y + 200, '4', { font: '48px Arial', fill: '#000000' }); // set text location
+       info.setDepth(1);
 
        //Set up user input
        cursors = this.input.keyboard.createCursorKeys();
