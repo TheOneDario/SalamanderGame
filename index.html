@@ -58,6 +58,7 @@
         }
         takeDamage(myArrow, me)
         {
+            turnRed(this);
             this.aggressive = true;
             if (myArrow.movingRight)
             {
@@ -105,8 +106,8 @@
                   myVector.x = player.x - obj.x;
                   myVector.y = player.y - obj.y;
                   myVector.normalize();
-                  myVector.x += Phaser.Math.Between(-2, 2) / 10;
-                  myVector.y += Phaser.Math.Between(-2, 2) / 10;
+                  myVector.x += Phaser.Math.Between(-2, 2) / 8;
+                  myVector.y += Phaser.Math.Between(-2, 2) / 7;
                   myVector.normalize();
                   let mySlime = new Slime(myScene, obj.x, obj.y, myVector.x * 300, myVector.y * 300);
                   bullets.push(mySlime);
@@ -135,15 +136,9 @@
           }
           takeDamage(myArrow, me)
           {
+              turnRed(this);
               this.aggressive = true;
-              if (myArrow.movingRight)
-              {
-                  this.x+= 8;
-              }
-              else
-              {
-                  this.x -= 8;
-              }
+
               reverseDespawn(myArrow, me);
               this.hp--;
               if (this.hp <= 0)
@@ -245,6 +240,7 @@
     var map;
     var spikeLayer;
     var currentScene;
+    var theGame;
     //Keyboard controls
     var cursors;
     var keys;
@@ -304,6 +300,24 @@
         }
     }
 
+    function turnRed(target)
+    {
+        target.tint = 0xff5353;
+
+        var timer = theGame.time.addEvent({
+             delay: 400,
+             callback: turnWhite,
+             args: [target],
+             callbackScope: currentScene,
+             loop: false
+         });
+    }
+
+    function turnWhite(target)
+    {
+        target.tint = 0xffffff;
+    }
+
     // Music credit: Music by Marllon Silva (xDeviruchi)
     /**
     TODO: Add bullets that can hit slugs
@@ -316,8 +330,9 @@
     {
         if (!hitCooldown)
         {
+            turnRed(myPlayer);
             hitCooldown = true;
-            this.time.delayedCall(500, resetHitCooldown, [], this); // Make cooldown stop in 1 second
+            this.time.delayedCall(500, resetHitCooldown, [], this); // Make cooldown stop in 1/2 second
             TakeDamage(1);
         }
     }
@@ -325,8 +340,9 @@
     {
         if (!hitCooldown)
         {
+            turnRed(myPlayer);
             hitCooldown = true;
-            this.time.delayedCall(500, resetHitCooldown, [], this); // Make cooldown stop in 1 second
+            this.time.delayedCall(500, resetHitCooldown, [], this); // Make cooldown stop in 1/2 second
             TakeDamage(4);
         }
     }
@@ -340,21 +356,12 @@
             TakeDamage(1);
         }
     }
-    function TakeDamage(amount)
-    {
-        hp -= amount;
-        info.setText(hp);
-        console.log(hp);
 
-        if (hp <= 0)
-        {
-            console.log("L");
-        }
-    }
     function create()
     {
         //Set the background origin to be at (0, 0) or top left corner of the image rather than the center of the image asset
        let background = this.add.tileSprite(0, 0, game.scale.width, game.scale.height, 'sky').setOrigin(0, 0);
+       theGame = this;
        currentScene = this.scene;
        //Create the layer and the player character set to collide with the layer
        this.anims.create({key: 'player_animation', frames: this.anims.generateFrameNames('player', {prefix: 'Sal', end: 6, zeroPad: 1}), repeat: -1, frameRate: 17});
@@ -409,7 +416,20 @@
        fox2 = new Fox(this, 530, 190, 'fox', 'foxally');
 
        createSpeechBubble(530, 115, 140, 50, '“kill the slugs pls <3"', this);
-       createSpeechBubble(190, 40, 300, 60, "arrows key to move, space to jump, up arrow to shoot <3", this);
+       createSpeechBubble(190, 30, 300, 70, "arrows keys to move, space to jump or double jump, up arrow to shoot <3", this);
+     }
+
+     function TakeDamage(amount)
+     {
+         turnRed(player);
+         hp -= amount;
+         info.setText(hp);
+         console.log(hp);
+
+         if (hp <= 0)
+         {
+             console.log("L");
+         }
      }
 
        function createSpeechBubble (x, y, width, height, quote, scene)
@@ -478,6 +498,15 @@
         if (!cursors.left.isDown && !keys.A.isDown && !cursors.right.isDown && !keys.D.isDown)
         {
             player.play(player.animation);
+        }
+
+        if (cooldown && player.tintBottomLeft === 0xffffff)
+        {
+            player.tint = 0xafafaf;
+        }
+        else if (!cooldown && player.tintBottomLeft === 0xafafaf)
+        {
+            player.tint = 0xffffff;
         }
 
 
