@@ -49,6 +49,8 @@
             this.setCollideWorldBounds(true);
             this.setGravityY(3000);
             this.aggressive = false;
+            this.setFlip(true, false);
+
         }
         addTween(scene, xDist, yDist, time)
         {
@@ -79,10 +81,12 @@
                 if (this.x < player.x) // If slug is too far left
                 {
                       this.setVelocityX(50); // Move right
+                      this.setFlip(true, false);
                 }
                 else if (this.x > player.x) // If slug is too far right
                 {
                       this.setVelocityX(-50); // Move left
+                      this.setFlip(false, false);
                 }
             }
             else if (Phaser.Math.Distance.Between(player.x, player.y, this.x, this.y) <= 0 || Phaser.Math.Difference(this.y, player.y) <= 30)
@@ -480,6 +484,8 @@
         for (let i = 0; i < slugs.length; i++) // For each slug
         {
               slugs[i].pathfind(); // Make each slug move towards player
+
+
         }
         if (cursors.up.isDown && !cooldown)
         {
