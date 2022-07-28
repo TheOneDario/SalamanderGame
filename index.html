@@ -41,7 +41,7 @@
             this.scene.physics.add.overlap(arrows, this, this.takeDamage, null, this); // arrows hurt slugs
             scene.add.existing(this);
             scene.physics.add.existing(this);
-            this.setScale(0.2);
+            this.setScale(1.35);
             this.setCollideWorldBounds(true);
             this.setGravityY(3000);
             this.aggressive = false;
@@ -258,7 +258,7 @@
         this.load.image('sky', 'assets/bg.png');
         this.load.image('platform', 'assets/platform.png');
         this.load.image('player', 'assets/wabbit.png');
-        this.load.image('slug', 'assets/slug.png');
+        this.load.image('slug', 'assets/slug1.png');
         this.load.image('wingSlug', 'assets/redslug.png');
         this.load.image('arrow', 'assets/arrow.png');
         this.load.image('slime', 'assets/slime.png');
