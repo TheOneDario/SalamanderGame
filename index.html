@@ -584,7 +584,7 @@
       },
       update: function(){
         playerMechanics(this);
-        if (player.body.x > 700 || player.body.x < 40) {
+        if (player.body.x > 700) {
           this.scene.start('sceneB');
         }
       }
@@ -639,13 +639,6 @@
           layer.setScale(1.37);
           spikeLayer.setScale(1.37);
 
-          createSlug(500,100,0,this);
-          createSlug(200,300,0,this);
-          createSlug(410,300,0,this);
-          createSlug(200,600,0,this);
-          createSlug(410,600,0,this);
-          createSlug(600,600,1,this);
-
           cursors = this.input.keyboard.createCursorKeys();
           keys = this.input.keyboard.addKeys('A, D');
           space = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
@@ -664,8 +657,18 @@
             this.physics.add.collider(arrows, layer, reverseDespawn, null, this); // make arrows despawn after hitting tiles
             this.physics.add.collider(player, layer);
 
+          //add slugs
+          createSlug(500,100,0,this);
+          createSlug(200,300,0,this);
+          createSlug(410,300,0,this);
+          createSlug(200,600,0,this);
+          createSlug(410,600,0,this);
+          createSlug(600,600,1,this);
+
           info = this.add.text(player.x - 200, player.y + 200, '4', { font: '48px Arial', fill: '#ff0000' }); // set text location
           info.setDepth(1);
+
+
        },
        update: function(){
          playerMechanics(this);
