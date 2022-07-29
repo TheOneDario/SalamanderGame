@@ -508,30 +508,54 @@
           }
        });
 
+       var Title = new Phaser.Class({
+         Extends: Phaser.Scene,
+         intitialize:
+         function Title()
+         {
+           Phaser.Scene.call(this, {key: 'title'});
+         },
+         preload: function(){
+           this.load.image('sky', 'assets/bg.png');
+           this.load.image('death', 'assets/death.png');
+           this.load.image('win', 'assets/win.png');
+           this.load.image('mainTitle', 'assets/titleScreen.png');
+           this.load.image('lvl2bg', 'assets/L2back_final.png');
+           this.load.image('platform', 'assets/platform.png');
+           this.load.atlas('player', 'assets/sally.png', 'assets/sally.json');;
+           this.load.image('slug', 'assets/GreenSlug.png');
+           this.load.image('wingSlug', 'assets/GreenWingSlug.png');
+           this.load.image('arrow', 'assets/arrow.png');
+           this.load.image('slime', 'assets/slime.png');
+           this.load.image('tileset', 'assets/jungleTileSet.png');
+           this.load.image('spikes', 'assets/16-bit-spike-Sheet.png');
+           this.load.atlas('fox', 'assets/Fox_Sprite.png', 'assets/Fox_Sprite.json');
+           this.load.tilemapTiledJSON('tilemap', 'assets/level1v4.json');
+           this.load.tilemapTiledJSON('tilemap2', 'assets/level2.json');
+         },
+         create: function()
+         {
+           let background = this.add.tileSprite(0, 0, game.scale.width, game.scale.height, 'mainTitle').setOrigin(0, 0);
+           currentScene = this.scene;
+           theGame = this.scene;
+
+           cursors = this.input.keyboard.createCursorKeys();
+           keys = this.input.keyboard.addKeys('A, D');
+         },
+         update: function(){
+           if (cursors.down.isDown) {
+             this.scene.start('sceneA');
+           }
+         }
+       });
+
      var SceneA = new Phaser.Class({
        Extends: Phaser.Scene,
        initialize:
        function SceneA(){
          Phaser.Scene.call(this, {key: 'sceneA'});
        },
-       preload: function(){
-         this.load.image('sky', 'assets/bg.png');
-         this.load.image('death', 'assets/death.png');
-         this.load.image('win', 'assets/win.png');
-         this.load.image('lvl2bg', 'assets/L2back_final.png');
-         this.load.image('platform', 'assets/platform.png');
-         this.load.atlas('player', 'assets/sally.png', 'assets/sally.json');;
-         this.load.image('slug', 'assets/GreenSlug.png');
-         this.load.image('wingSlug', 'assets/GreenWingSlug.png');
-         this.load.image('arrow', 'assets/arrow.png');
-         this.load.image('slime', 'assets/slime.png');
-         this.load.image('tileset', 'assets/jungleTileSet.png');
-         this.load.image('spikes', 'assets/16-bit-spike-Sheet.png');
-         this.load.atlas('fox', 'assets/Fox_Sprite.png', 'assets/Fox_Sprite.json');
-         this.load.tilemapTiledJSON('tilemap', 'assets/level1v4.json');
-         this.load.tilemapTiledJSON('tilemap2', 'assets/level2.json');
 
-       },
        create: function(){
 
          //Set the background origin to be at (0, 0) or top left corner of the image rather than the center of the image asset
@@ -853,7 +877,7 @@
         physics: {
             default: 'arcade',
         },
-        scene: [SceneA, SceneB, Death, Win]
+        scene: [Title, SceneA, SceneB, Death, Win]
     };
 
     var game = new Phaser.Game(config);
