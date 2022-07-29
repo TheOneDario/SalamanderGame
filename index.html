@@ -107,7 +107,7 @@
               this.scene.physics.add.overlap(arrows, this, this.takeDamage, null, this); // arrows hurt slugs
               scene.add.existing(this);
               scene.physics.add.existing(this);
-              this.setScale(0.2);
+              this.setScale(0.6);
               this.setCollideWorldBounds(true);
               this.setGravityY(0);
               this.aggressive = false;
@@ -214,12 +214,142 @@
              });
         }
     }
+    class BossSlug extends Phaser.Physics.Arcade.Sprite
+      {
+          constructor(scene, x, y)
+          {
+              super(scene, x, y, 'wingSlug');
+              slugs.push(this); // add to list of slugs
+              this.hp = 16;
+              this.scene.physics.add.overlap(arrows, this, this.takeDamage, null, this); // arrows hurt slugs
+              scene.add.existing(this);
+              scene.physics.add.existing(this);
+              this.setScale(0.3);
+              this.setCollideWorldBounds(true);
+              this.setGravityY(0);
+              this.aggressive = false;
+
+               var timer = scene.time.addEvent({
+                    delay: 1200,
+                    callback: this.fire,
+                    args: [scene, this],
+                    callbackScope: scene,
+                    loop: true
+                });
+
+                var timer2 = scene.time.addEvent({
+                     delay: 3000,
+                     callback: this.fireHoming,
+                     args: [scene, this],
+                     callbackScope: scene,
+                     loop: true
+                 });
+          }
+
+          fireHoming(myScene, obj)
+          {
+                if (obj.active)
+                {
+                    let mySlime = new SixSlime(myScene, obj.x, obj.y);
+                }
+          }
+
+          fire (myScene, obj)
+          {
+              let angle = 0;
+              let amountOfBullets = 50;
+              for (let i = 0; i < amountOfBullets; i++)
+              {
+                  if (obj.active)
+                  {
+                  angle = (360 / amountOfBullets) * i;
+                  let myVector = new Phaser.Math.Vector2();
+                  myVector.x = Math.cos(angle * 3.14 / 180);
+                  myVector.y = Math.sin(angle * 3.14 / 180);
+                  myVector.x += Phaser.Math.Between(-2, 2) / 50;
+                  myVector.y += Phaser.Math.Between(-2, 2) / 50;
+                  myVector.normalize();
+                  let mySlime = new Slime(myScene, obj.x, obj.y, myVector.x * 140, myVector.y * 140);
+                  bullets.push(mySlime);
+                  }
+              }
+          }
+
+          pathfind()
+          {
+
+          }
+
+          takeDamage(myArrow, me)
+          {
+              turnRed(this);
+              this.aggressive = true;
+
+
+
+              reverseDespawn(myArrow, me);
+              this.hp--;
+              this.setScale((this.hp / 16) * 0.3);
+              if (this.hp <= 0)
+              {
+                  despawn(this, this);
+              }
+          }
+      }
+      class SixSlime extends Slime
+    {
+      constructor(scene, x, y)
+      {
+          super(scene, x, y, 'sixslime');
+          slugs.push(this); // add to list of slugs
+          this.hp = 1;
+          this.scene.physics.add.overlap(arrows, this, this.takeDamage, null, this); // arrows hurt slugs
+          scene.add.existing(this);
+          scene.physics.add.existing(this);
+          this.setScale(0.007);
+          this.setCollideWorldBounds(true);
+          this.setGravityY(0);
+
+           var timer = scene.time.addEvent({
+                delay: 50,
+                callback: this.fire,
+                args: [scene, this],
+                callbackScope: scene,
+                loop: true
+            });
+      }
+      takeDamage(myArrow, me)
+      {
+          despawn(this, this);
+      }
+      pathfind()
+      {
+          if (this.x < player.x) // If slug is too far left
+          {
+              this.setVelocityX(50); // Move right
+          }
+          else if (this.x > player.x) // If slug is too far right
+          {
+              this.setVelocityX(-50); // Move left
+          }
+          if (this.y < player.y)
+          {
+              this.setVelocityY(50);
+          }
+          else if (this.y > player.y)
+          {
+              this.setVelocity(-50);
+          }
+      }
+
+    }
     //Game Objects
     var layer;
     var player;
     var map;
     var spikeLayer;
     var currentScene;
+    var oldScene;
     var theGame;
     //Keyboard controls
     var cursors;
@@ -235,20 +365,7 @@
     var arrows = [];
     var bullets = [];
     var bubbles = [];
-    function preload()
-    {
-        this.load.image('sky', 'assets/bg.png');
-        this.load.image('platform', 'assets/platform.png');
-        this.load.atlas('player', 'assets/sally.png', 'assets/sally.json');;
-        this.load.image('slug', 'assets/GreenSlug.png');
-        this.load.image('wingSlug', 'assets/GreenWingSlug.png');
-        this.load.image('arrow', 'assets/arrow.png');
-        this.load.image('slime', 'assets/slime.png');
-        this.load.image('tileset', 'assets/jungleTileSet.png');
-        this.load.image('spikes', 'assets/16-bit-spike-Sheet.png');
-        this.load.atlas('fox', 'assets/Fox_Sprite.png', 'assets/Fox_Sprite.json');
-        this.load.tilemapTiledJSON('tilemap', 'assets/level1v4.json');
-    }
+
     function despawn(despawner, despawnee)
     {
         despawnee.disableBody(true, true); //remove that object
@@ -330,6 +447,30 @@
     }
 
 
+    var Death = new Phaser.Class({
+       Extends: Phaser.Scene,
+       initialize:
+         function Death()
+         {
+             Phaser.Scene.call(this, {key: 'death'});
+         },
+       create:
+         function()
+         {
+           let background = this.add.tileSprite(0, 0, game.scale.width, game.scale.height, 'death').setOrigin(0, 0);
+           currentScene = this.scene;
+           theGame = this.scene;
+
+           var timer = this.time.addEvent({
+                delay: 3000,
+                callback: ReloadLevel,
+                args: [],
+                callbackScope: currentScene,
+                loop: false
+            });
+         }
+       });
+
      var SceneA = new Phaser.Class({
        Extends: Phaser.Scene,
        initialize:
@@ -338,6 +479,7 @@
        },
        preload: function(){
          this.load.image('sky', 'assets/bg.png');
+         this.load.image('death', 'assets/death.png');
          this.load.image('lvl2bg', 'assets/L2back_final.png');
          this.load.image('platform', 'assets/platform.png');
          this.load.atlas('player', 'assets/sally.png', 'assets/sally.json');;
@@ -357,33 +499,58 @@
          //Set the background origin to be at (0, 0) or top left corner of the image rather than the center of the image asset
         let background = this.add.tileSprite(0, 0, game.scale.width, game.scale.height, 'sky').setOrigin(0, 0);
         theGame = this;
+
+        var layer;
+        var map;
+        var spikeLayer;
+        currentScene;
+        theGame;
+        //Keyboard controls
+
+        hp = 4;
+        cooldown = false;
+        hitCooldown = false;
+        facingRight = true;
+        MAX_JUMP_COUNT = 2;
+        currentJumps = MAX_JUMP_COUNT;
+        slugs = [];
+        arrows = [];
+        bullets = [];
+        bubbles = [];
+
+        theGame = this;
         currentScene = this.scene;
         //Create the layer and the player character set to collide with the layer
         this.anims.create({key: 'player_animation', frames: this.anims.generateFrameNames('player', {prefix: 'Sal', end: 6, zeroPad: 1}), repeat: -1, frameRate: 17});
         this.anims.create({key: 'player_idle', frames: this.anims.generateFrameNames('player', {prefix: 'Sal', end: 6, zeroPad: 1}), repeat: -1, frameRate: 0});
-        player = new Player(this, 100, 50, "player", "player_animation", "player_idle");
+        player = new Player(this, 0, 150, "player", "player_animation", "player_idle");
         player.setDepth(1);
-        this.physics.add.collider(slugs, slugs);
-        this.physics.add.overlap(player, slugs, CollisionDamage, null, this); // make enemies deal damage
-        this.physics.add.overlap(player, bullets, CollisionDeleter, null, this); // make enemy bullets deal damage then despawn
+
         map = this.make.tilemap({ key: 'tilemap'});
          var tileset = map.addTilesetImage('jungleTileSet', 'tileset');
          var spikeTileset = map.addTilesetImage('16-bit-spike-Sheet', 'spikes');
          var layer = map.createLayer('Tile Layer 1', tileset, 0, 0);
          var spikeLayer = map.createLayer('Spikes', spikeTileset, 0, 0);
          layer.setCollisionByExclusion([-1]);
-         this.physics.add.collider(player, layer);
+
          spikeLayer.setCollisionByExclusion([-1]);
          //spikes collision
          this.physics.add.collider(player, spikeLayer, CollisionDamage, null, this);
          layer.setScale(1.37);
          spikeLayer.setScale(1.37);
+
+        createSlug(240, 530, 0, this);
+        createSlug(530, 530, 0, this);
+
+        this.physics.add.collider(slugs, slugs);
+        this.physics.add.overlap(player, slugs, CollisionDamage, null, this); // make enemies deal damage
+        this.physics.add.overlap(player, bullets, CollisionDeleter, null, this); // make enemy bullets deal damage then despawn
         this.physics.add.collider(player, layer); // make player collide with ground
         this.physics.add.collider(bullets, layer, reverseDespawn, null, this); // make bullets despawn after hitting tiles
         this.physics.add.collider(slugs, layer); // make slugs collide with tiles
         this.physics.add.collider(arrows, layer, reverseDespawn, null, this); // make arrows despawn after hitting tiles
-        createSlug(240, 530, 0, this);
-        createSlug(530, 530, 0, this);
+        this.physics.add.collider(player, layer);
+
         info = this.add.text(player.x - 200, player.y + 200, '4', { font: '48px Arial', fill: '#ff0000' }); // set text location
         info.setDepth(1);
         //Set up user input
@@ -417,6 +584,27 @@
        },
        create: function() {
         let background = this.add.tileSprite(0, 0, game.scale.width, game.scale.height, 'lvl2bg').setOrigin(0, 0);
+        theGame = this;
+        currentScene = this.scene;
+
+        var layer;
+        var map;
+        var spikeLayer;
+        currentScene;
+        theGame;
+        //Keyboard controls
+
+        hp = 4;
+        cooldown = false;
+        hitCooldown = false;
+        facingRight = true;
+        MAX_JUMP_COUNT = 2;
+        currentJumps = MAX_JUMP_COUNT;
+        slugs = [];
+        arrows = [];
+        bullets = [];
+        bubbles = [];
+
 
           map = this.make.tilemap({ key: 'tilemap2'});
           var tileset = map.addTilesetImage('jungleTileSet', 'tileset');
@@ -426,7 +614,7 @@
 
           this.anims.create({key: 'player_animation', frames: this.anims.generateFrameNames('player', {prefix: 'Sal', end: 6, zeroPad: 1}), repeat: -1, frameRate: 17});
           this.anims.create({key: 'player_idle', frames: this.anims.generateFrameNames('player', {prefix: 'Sal', end: 6, zeroPad: 1}), repeat: -1, frameRate: 0});
-          player = new Player(this, 100, 50, "player", "player_animation", "player_idle");
+          player = new Player(this, 0, 150, "player", "player_animation", "player_idle");
           player.setDepth(1);
 
           layer.setCollisionByExclusion([-1]);
@@ -446,13 +634,27 @@
           this.cameras.main.startFollow(player, true, 0.08, 0.08);
           this.cameras.main.setZoom(2.3);
 
-          this.physics.add.collider(player, layer); // make player collide with ground
-          this.physics.add.collider(bullets, layer, reverseDespawn, null, this); // make bullets despawn after hitting tiles
-          this.physics.add.collider(slugs, layer); // make slugs collide with tiles
-          this.physics.add.collider(arrows, layer, reverseDespawn, null, this); // make arrows despawn after hitting tiles
+          this.physics.add.collider(slugs, slugs);
+            this.physics.add.overlap(player, slugs, CollisionDamage, null, this); // make enemies deal damage
+            this.physics.add.overlap(player, bullets, CollisionDeleter, null, this); // make enemy bullets deal damage then despawn
+            this.physics.add.collider(player, layer); // make player collide with ground
+            this.physics.add.collider(bullets, layer, reverseDespawn, null, this); // make bullets despawn after hitting tiles
+            this.physics.add.collider(slugs, layer); // make slugs collide with tiles
+            this.physics.add.collider(arrows, layer, reverseDespawn, null, this); // make arrows despawn after hitting tiles
+            this.physics.add.collider(player, layer);
+
+          //add slugs
+          createSlug(500,100,0,this);
+          createSlug(200,300,0,this);
+          createSlug(410,300,0,this);
+          createSlug(200,600,0,this);
+          createSlug(410,600,0,this);
+          createSlug(600,600,1,this);
 
           info = this.add.text(player.x - 200, player.y + 200, '4', { font: '48px Arial', fill: '#ff0000' }); // set text location
           info.setDepth(1);
+
+
        },
        update: function(){
          playerMechanics(this);
@@ -469,9 +671,15 @@
          console.log(hp);
          if (hp <= 0)
          {
-             console.log("L");
+            if (currentScene.key !== 'death')
+            {
+            oldScene = currentScene;
+            currentScene.start('death');
+            }
+
          }
-     }
+   }
+
        function createSpeechBubble (x, y, width, height, quote, scene)
        {
            var bubbleWidth = width;
@@ -567,6 +775,14 @@
       info.y = scene.cameras.main.worldView.y + 20;
     }
 
+    function LoadLevel(level)
+    {
+        currentScene.start(level.key);
+    }
+    function ReloadLevel()
+    {
+        currentScene.start(oldScene.key);
+    }
 
     function resetCooldown()
     {
@@ -598,7 +814,7 @@
         physics: {
             default: 'arcade',
         },
-        scene: [SceneA, SceneB]
+        scene: [SceneA, SceneB, Death]
     };
 
     var game = new Phaser.Game(config);
