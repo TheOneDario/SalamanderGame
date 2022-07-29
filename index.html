@@ -485,6 +485,29 @@
          }
        });
 
+       var Win = new Phaser.Class({
+         Extends: Phaser.Scene,
+         initialize:
+          function Win()
+          {
+            Phaser.Scene.call(this, {key: 'win'});
+          },
+          create: function()
+          {
+            let background = this.add.tileSprite(0, 0, game.scale.width, game.scale.height, 'win').setOrigin(0, 0);
+            currentScene = this.scene;
+            theGame = this.scene;
+
+            cursors = this.input.keyboard.createCursorKeys();
+            keys = this.input.keyboard.addKeys('A, D');
+          },
+          update: function(){
+            if (cursors.down.isDown) {
+              this.scene.start('sceneA');
+            }
+          }
+       });
+
      var SceneA = new Phaser.Class({
        Extends: Phaser.Scene,
        initialize:
@@ -494,6 +517,7 @@
        preload: function(){
          this.load.image('sky', 'assets/bg.png');
          this.load.image('death', 'assets/death.png');
+         this.load.image('win', 'assets/win.png');
          this.load.image('lvl2bg', 'assets/L2back_final.png');
          this.load.image('platform', 'assets/platform.png');
          this.load.atlas('player', 'assets/sally.png', 'assets/sally.json');;
@@ -672,8 +696,9 @@
        },
        update: function(){
          playerMechanics(this);
-
-
+         if (player.body.x > 700) {
+           this.scene.start('win');
+         }
        }
      });
 
@@ -828,7 +853,7 @@
         physics: {
             default: 'arcade',
         },
-        scene: [SceneA, SceneB, Death]
+        scene: [SceneA, SceneB, Death, Win]
     };
 
     var game = new Phaser.Game(config);
