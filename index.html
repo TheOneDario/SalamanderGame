@@ -184,6 +184,11 @@
                  loop: true
              });
         }
+
+        move()
+        {
+
+        }
     }
     class Arrow extends Phaser.Physics.Arcade.Sprite
     {
@@ -229,16 +234,8 @@
               this.setGravityY(0);
               this.aggressive = false;
 
-               var timer = scene.time.addEvent({
-                    delay: 1200,
-                    callback: this.fire,
-                    args: [scene, this],
-                    callbackScope: scene,
-                    loop: true
-                });
-
                 var timer2 = scene.time.addEvent({
-                     delay: 3000,
+                     delay: 1000,
                      callback: this.fireHoming,
                      args: [scene, this],
                      callbackScope: scene,
@@ -296,53 +293,55 @@
               }
           }
       }
-      class SixSlime extends Slime
-    {
-      constructor(scene, x, y)
+      class SixSlime extends Phaser.Physics.Arcade.Sprite
       {
-          super(scene, x, y, 'sixslime');
-          slugs.push(this); // add to list of slugs
-          this.hp = 1;
-          this.scene.physics.add.overlap(arrows, this, this.takeDamage, null, this); // arrows hurt slugs
-          scene.add.existing(this);
-          scene.physics.add.existing(this);
-          this.setScale(0.007);
-          this.setCollideWorldBounds(true);
-          this.setGravityY(0);
+          constructor(scene, x, y)
+          {
+              super(scene, x, y, 'slimeCircle');
+              scene.add.existing(this);
+              scene.physics.add.existing(this);
+              this.setScale(1);
+              this.setCollideWorldBounds(false);
+          }
+          move()
+          {
+              if (this.x < player.x) // If slug is too far left
+              {
+                  this.setVelocityX(50); // Move right
+              }
+              else if (this.x > player.x) // If slug is too far right
+              {
+                  this.setVelocityX(-50); // Move left
+              }
+              if (this.y < player.y)
+              {
+                  this.setVelocityY(50);
+              }
+              else if (this.y > player.y)
+              {
+                  this.setVelocity(-50);
+              }
+          }
+        }
+      class SlimeWall extends Phaser.Physics.Arcade.Sprite
+      {
+          constructor(scene, x, y)
+          {
+              super(scene, x, y, 'slimeWall');
+              bullets.push(this); // add to list of slugs
+              scene.add.existing(this);
+              scene.physics.add.existing(this);
+              this.setScale(1);
+              this.setCollideWorldBounds(false);
+              this.setGravityY(0);
+              this.setVelocityX(-50);
+          }
 
-           var timer = scene.time.addEvent({
-                delay: 50,
-                callback: this.fire,
-                args: [scene, this],
-                callbackScope: scene,
-                loop: true
-            });
-      }
-      takeDamage(myArrow, me)
-      {
-          despawn(this, this);
-      }
-      pathfind()
-      {
-          if (this.x < player.x) // If slug is too far left
+          move()
           {
-              this.setVelocityX(50); // Move right
-          }
-          else if (this.x > player.x) // If slug is too far right
-          {
-              this.setVelocityX(-50); // Move left
-          }
-          if (this.y < player.y)
-          {
-              this.setVelocityY(50);
-          }
-          else if (this.y > player.y)
-          {
-              this.setVelocity(-50);
-          }
-      }
 
-    }
+          }
+      }
     //Game Objects
     var layer;
     var player;
@@ -374,7 +373,7 @@
         this.load.image('wingSlug', 'assets/GreenWingSlug.png');
         this.load.image('arrow', 'assets/arrow.png');
         this.load.image('slime', 'assets/slime.png');
-        this.load.image('sixslime', 'assets/sixslime.png');
+        this.load.image('slimeCircle', 'assets/slimeCircle.png');
         this.load.image('tileset', 'assets/jungleTileSet.png');
         this.load.image('spikes', 'assets/16-bit-spike-Sheet.png');
         this.load.atlas('fox', 'assets/Fox_Sprite.png', 'assets/Fox_Sprite.json');
@@ -401,6 +400,11 @@
                 let wingSlug = new WingSlug(scene, x, y);
                 slugs.push(wingSlug); // add to list of winged slugs
                 scene.physics.add.collider(wingSlug, layer);
+                break;
+            case 2:
+                let bossSlug = new BossSlug(scene, x, y);
+                slugs.push(bossSlug);
+                scene.physics.add.collider(bossSlug, layer);
                 break;
             default:
                 break;
@@ -584,8 +588,12 @@
       },
       update: function(){
         playerMechanics(this);
-        if (player.body.x > 700) {
+        if (player.body.x > 700 || player.body.x < 40) {
           this.scene.start('sceneB');
+        }
+        for (let i = 0; i < bullets.length; i++)
+        {
+           bullets[i].move();
         }
       }
     });
@@ -658,12 +666,15 @@
             this.physics.add.collider(player, layer);
 
           //add slugs
+          /**
           createSlug(500,100,0,this);
           createSlug(200,300,0,this);
           createSlug(410,300,0,this);
           createSlug(200,600,0,this);
           createSlug(410,600,0,this);
           createSlug(600,600,1,this);
+          **/
+          createSlug(640, 600, 2, this);
 
           info = this.add.text(player.x - 200, player.y + 200, '4', { font: '48px Arial', fill: '#ff0000' }); // set text location
           info.setDepth(1);
@@ -672,8 +683,14 @@
        },
        update: function(){
          playerMechanics(this);
-
-
+         for (let i = 0; i < bullets.length; i++)
+         {
+            bullets[i].move();
+         }
+        if (player.body.x > 720)
+        {
+          // you win TODO
+        }
        }
      });
 
