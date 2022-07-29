@@ -107,7 +107,7 @@
               this.scene.physics.add.overlap(arrows, this, this.takeDamage, null, this); // arrows hurt slugs
               scene.add.existing(this);
               scene.physics.add.existing(this);
-              this.setScale(0.2);
+              this.setScale(0.6);
               this.setCollideWorldBounds(true);
               this.setGravityY(0);
               this.aggressive = false;
@@ -541,7 +541,7 @@
         //Create the layer and the player character set to collide with the layer
         this.anims.create({key: 'player_animation', frames: this.anims.generateFrameNames('player', {prefix: 'Sal', end: 6, zeroPad: 1}), repeat: -1, frameRate: 17});
         this.anims.create({key: 'player_idle', frames: this.anims.generateFrameNames('player', {prefix: 'Sal', end: 6, zeroPad: 1}), repeat: -1, frameRate: 0});
-        player = new Player(this, 100, 50, "player", "player_animation", "player_idle");
+        player = new Player(this, 0, 150, "player", "player_animation", "player_idle");
         player.setDepth(1);
 
         map = this.make.tilemap({ key: 'tilemap'});
@@ -636,7 +636,7 @@
 
           this.anims.create({key: 'player_animation', frames: this.anims.generateFrameNames('player', {prefix: 'Sal', end: 6, zeroPad: 1}), repeat: -1, frameRate: 17});
           this.anims.create({key: 'player_idle', frames: this.anims.generateFrameNames('player', {prefix: 'Sal', end: 6, zeroPad: 1}), repeat: -1, frameRate: 0});
-          player = new Player(this, 100, 50, "player", "player_animation", "player_idle");
+          player = new Player(this, 0, 150, "player", "player_animation", "player_idle");
           player.setDepth(1);
 
           layer.setCollisionByExclusion([-1]);
