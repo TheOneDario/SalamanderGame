@@ -383,7 +383,7 @@
         this.physics.add.collider(player, layer);
         spikeLayer.setCollisionByExclusion([-1]);
         //spikes collision
-        this.physics.add.collider(player, spikeLayer, CollisionKill, null, this);
+        this.physics.add.collider(player, spikeLayer, CollisionDamage, null, this);
         layer.setScale(1.37);
         spikeLayer.setScale(1.37);
 
