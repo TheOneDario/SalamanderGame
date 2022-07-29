@@ -126,10 +126,35 @@
       }
     },
     {
-      "filename": "Sal0",
+      "filename": "SalShoot1",
       "frame": {
         "x": 42,
         "y": 2,
+        "w": 31,
+        "h": 50
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 5,
+        "y": 5,
+        "w": 31,
+        "h": 50
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 55
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "filename": "Sal0",
+      "frame": {
+        "x": 38,
+        "y": 112,
         "w": 30,
         "h": 50
       },
@@ -152,6 +177,31 @@
     },
     {
       "filename": "Sal4",
+      "frame": {
+        "x": 2,
+        "y": 223,
+        "w": 30,
+        "h": 50
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 6,
+        "y": 5,
+        "w": 30,
+        "h": 50
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 55
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "filename": "SalShoot0",
       "frame": {
         "x": 38,
         "y": 112,
@@ -182,8 +232,8 @@
     "image": "sally.png",
     "format": "RGBA8888",
     "size": {
-      "w": 74,
-      "h": 221
+      "w": 75,
+      "h": 275
     },
     "scale": 1
   }

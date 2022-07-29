@@ -21,13 +21,14 @@
     };
     class Player extends Phaser.Physics.Arcade.Sprite
     {
-        constructor(scene, x, y, spritesheet, _animation, _animationIdle)
+        constructor(scene, x, y, spritesheet, _animation, _animationIdle, _animationAttack)
         {
-            super(scene, x, y, spritesheet, _animation, _animationIdle);
+            super(scene, x, y, spritesheet, _animation, _animationIdle, _animationAttack);
             scene.add.existing(this);
             scene.physics.add.existing(this);
             this.animationIdle = _animationIdle;
             this.animation = _animation;
+            this.animationAttack = _animationAttack;
             this.setScale(0.6);
             this.setCollideWorldBounds(true);
             this.setGravityY(2000); //We will set gravity *per object* rather than for the scene!
@@ -247,6 +248,7 @@
     var space;
     var hp = 4;
     var cooldown = false;
+    var attackAnimation = false;
     var hitCooldown = false;
     var facingRight = true;
 
@@ -366,8 +368,9 @@
        //Create the layer and the player character set to collide with the layer
        this.anims.create({key: 'player_animation', frames: this.anims.generateFrameNames('player', {prefix: 'Sal', end: 6, zeroPad: 1}), repeat: -1, frameRate: 17});
        this.anims.create({key: 'player_idle', frames: this.anims.generateFrameNames('player', {prefix: 'Sal', end: 6, zeroPad: 1}), repeat: -1, frameRate: 0});
+       this.anims.create({key: 'player_attack', frames: this.anims.generateFrameNames('player', {prefix: 'SalShoot', end: 1, zeroPad: 1}), repeat: 1, frameRate: 175});
 
-       player = new Player(this, 100, 50, "player", "player_animation", "player_idle");
+       player = new Player(this, 100, 50, "player", "player_animation", "player_idle", "player_attack");
        player.setDepth(1);
 
        this.physics.add.collider(slugs, slugs);
@@ -494,8 +497,7 @@
             player.setVelocityX(200);
         }
 
-
-        if (!cursors.left.isDown && !keys.A.isDown && !cursors.right.isDown && !keys.D.isDown)
+        if (!cursors.left.isDown && !keys.A.isDown && !cursors.right.isDown && !keys.D.isDown && !attackAnimation)
         {
             player.play(player.animation);
         }
@@ -519,6 +521,7 @@
         if (cursors.up.isDown && !cooldown)
         {
             cooldown = true; // Turn on arrow cooldown
+            armsUp(this);
             this.time.delayedCall(1000, resetCooldown, [], this); // Make cooldown stop in 1000ms
             let offset = 30;
             if (facingRight)
@@ -528,11 +531,31 @@
             else {
                 offset = -30;
             }
+
+
             myArrow = new Arrow(this, player.x + offset, player.y); // Spawn arrow
             arrows.push(myArrow);
         }
         info.x = this.cameras.main.worldView.x + 25;
         info.y = this.cameras.main.worldView.y + 20;
+    }
+    function armsUp(scene)
+    {
+        attackAnimation = true;
+        player.play(player.animationAttack);
+
+        var timer = scene.time.addEvent({
+             delay: 300,
+             callback: armsDown,
+             args: [],
+             callbackScope: scene,
+             loop: false
+         });
+    }
+    function armsDown()
+    {
+        attackAnimation = false;
+        player.play(player.animation);
     }
     function resetCooldown()
     {
