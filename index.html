@@ -365,7 +365,21 @@
     var arrows = [];
     var bullets = [];
     var bubbles = [];
-
+    function preload()
+    {
+        this.load.image('sky', 'assets/bg.png');
+        this.load.image('platform', 'assets/platform.png');
+        this.load.atlas('player', 'assets/sally.png', 'assets/sally.json');;
+        this.load.image('slug', 'assets/GreenSlug.png');
+        this.load.image('wingSlug', 'assets/GreenWingSlug.png');
+        this.load.image('arrow', 'assets/arrow.png');
+        this.load.image('slime', 'assets/slime.png');
+        this.load.image('sixslime', 'assets/sixslime.png');
+        this.load.image('tileset', 'assets/jungleTileSet.png');
+        this.load.image('spikes', 'assets/16-bit-spike-Sheet.png');
+        this.load.atlas('fox', 'assets/Fox_Sprite.png', 'assets/Fox_Sprite.json');
+        this.load.tilemapTiledJSON('tilemap', 'assets/level1v4.json');
+    }
     function despawn(despawner, despawnee)
     {
         despawnee.disableBody(true, true); //remove that object
