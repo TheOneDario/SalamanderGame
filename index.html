@@ -31,7 +31,7 @@
             this.scene.physics.add.overlap(arrows, this, this.takeDamage, null, this); // arrows hurt slugs
             scene.add.existing(this);
             scene.physics.add.existing(this);
-            this.setScale(1.35);
+            this.setScale(.6);
             this.setCollideWorldBounds(true);
             this.setGravityY(3000);
             this.aggressive = false;
@@ -361,18 +361,22 @@
          this.physics.add.overlap(player, slugs, CollisionDamage, null, this); // make enemies deal damage
          this.physics.add.overlap(player, bullets, CollisionDeleter, null, this); // make enemy bullets deal damage then despawn
 
-         map = this.make.tilemap({ key: 'tilemap'});
-          var tileset = map.addTilesetImage('jungleTileSet', 'tileset');
-          var spikeTileset = map.addTilesetImage('16-bit-spike-Sheet', 'spikes');
-          var layer = map.createLayer('Tile Layer 1', tileset, 0, 0);
-          var spikeLayer = map.createLayer('Spikes', spikeTileset, 0, 0);
-          layer.setCollisionByExclusion([-1]);
-          this.physics.add.collider(player, layer);
-          spikeLayer.setCollisionByExclusion([-1]);
-          //spikes collision
-          this.physics.add.collider(player, spikeLayer, CollisionKill, null, this);
-          layer.setScale(1.37);
-          spikeLayer.setScale(1.37);
+       this.physics.add.collider(slugs, slugs);
+       this.physics.add.overlap(player, slugs, CollisionDamage, null, this); // make enemies deal damage
+       this.physics.add.overlap(player, bullets, CollisionDeleter, null, this); // make enemy bullets deal damage then despawn
+
+       map = this.make.tilemap({ key: 'tilemap'});
+        var tileset = map.addTilesetImage('jungleTileSet', 'tileset');
+        var spikeTileset = map.addTilesetImage('16-bit-spike-Sheet', 'spikes');
+        var layer = map.createLayer('Tile Layer 1', tileset, 0, 0);
+        var spikeLayer = map.createLayer('Spikes', spikeTileset, 0, 0);
+        layer.setCollisionByExclusion([-1]);
+        this.physics.add.collider(player, layer);
+        spikeLayer.setCollisionByExclusion([-1]);
+        //spikes collision
+        this.physics.add.collider(player, spikeLayer, CollisionDamage, null, this);
+        layer.setScale(1.37);
+        spikeLayer.setScale(1.37);
 
 
          this.physics.add.collider(player, layer); // make player collide with ground
