@@ -181,7 +181,7 @@
                 });
 
                 var timer2 = scene.time.addEvent({
-                     delay: 1000,
+                     delay: 3000,
                      callback: this.fireHoming,
                      args: [scene, this],
                      callbackScope: scene,
@@ -498,7 +498,6 @@
      update:
        function()
        {
-         
        //Player will not move in the x-axis unless a movement key is being pressed
        player.setVelocityX(0);
 
