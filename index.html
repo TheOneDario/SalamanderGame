@@ -1,24 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.js"></script>
 </head>
 <body>
     <script>
-
-    var config = {
-        type: Phaser.AUTO,
-        width: 1200,
-        height: 700,
-        physics: {
-            default: 'arcade',
-        },
-        scene: {
-            preload: preload,
-            create: create,
-            update: update,
-            }
-    };
     class Player extends Phaser.Physics.Arcade.Sprite
     {
         constructor(scene, x, y, spritesheet, _animation, _animationIdle)
@@ -170,6 +156,74 @@
                 }
           }
       }
+
+      class BossSlug extends Phaser.Physics.Arcade.Sprite
+      {
+          constructor(scene, x, y)
+          {
+              super(scene, x, y, 'wingSlug');
+              slugs.push(this); // add to list of slugs
+              this.hp = 16;
+              this.scene.physics.add.overlap(arrows, this, this.takeDamage, null, this); // arrows hurt slugs
+              scene.add.existing(this);
+              scene.physics.add.existing(this);
+              this.setScale(0.3);
+              this.setCollideWorldBounds(true);
+              this.setGravityY(0);
+              this.aggressive = false;
+
+               var timer = scene.time.addEvent({
+                    delay: 1200,
+                    callback: this.fire,
+                    args: [scene, this],
+                    callbackScope: scene,
+                    loop: true
+                });
+          }
+
+          fire (myScene, obj)
+          {
+              let angle = 0;
+              for (let i = 0; i < 7; i++)
+              {
+                  if (obj.active)
+                  {
+                  angle = (360 / 7) * i;
+                  let myVector = new Phaser.Math.Vector2();
+                  myVector.x = Math.cos(angle * 3.14 / 180);
+                  myVector.y = Math.sin(angle * 3.14 / 180);
+                  myVector.x += Phaser.Math.Between(-2, 2) / 9;
+                  myVector.y += Phaser.Math.Between(-2, 2) / 9;
+                  myVector.normalize();
+                  let mySlime = new Slime(myScene, obj.x, obj.y, myVector.x * 100, myVector.y * 100);
+                  bullets.push(mySlime);
+                  }
+              }
+          }
+
+          pathfind()
+          {
+
+          }
+
+          takeDamage(myArrow, me)
+          {
+              turnRed(this);
+              this.aggressive = true;
+
+
+
+              reverseDespawn(myArrow, me);
+              this.hp--;
+              this.setScale((this.hp / 16) * 0.3);
+              if (this.hp <= 0)
+              {
+                  despawn(this, this);
+              }
+          }
+      }
+
+
       class Fox extends Phaser.Physics.Arcade.Sprite
       {
           constructor(scene, x, y, spritesheet, animation)
@@ -189,7 +243,7 @@
             super(scene, x, y, 'slime');
             scene.add.existing(this);
             scene.physics.add.existing(this);
-            this.setScale(0.02);
+            this.setScale(0.014);
             this.setCollideWorldBounds(false);
             this.setVelocity(xSpeed, ySpeed);
 
@@ -233,7 +287,7 @@
              });
         }
     }
-    var game = new Phaser.Game(config);
+
     //Game Objects
     var layer;
     var player;
@@ -245,33 +299,19 @@
     var cursors;
     var keys;
     var space;
+    // Gameplay Mechanics
     var hp = 4;
     var cooldown = false;
     var hitCooldown = false;
     var facingRight = true;
-
     var MAX_JUMP_COUNT = 2;
     var currentJumps = MAX_JUMP_COUNT;
-
+    // Layers
     var slugs = [];
     var arrows = [];
     var bullets = [];
     var bubbles = [];
 
-    function preload()
-    {
-        this.load.image('sky', 'assets/bg.png');
-        this.load.image('platform', 'assets/platform.png');
-        this.load.atlas('player', 'assets/sally.png', 'assets/sally.json');
-        this.load.image('slug', 'assets/slug1.png');
-        this.load.image('wingSlug', 'assets/redslug.png');
-        this.load.image('arrow', 'assets/arrow.png');
-        this.load.image('slime', 'assets/slime.png');
-        this.load.image('tileset', 'assets/jungleTileSet.png');
-        this.load.image('spikes', 'assets/16-bit-spike-Sheet.png');
-        this.load.atlas('fox', 'assets/Fox_Sprite.png', 'assets/Fox_Sprite.json');
-        this.load.tilemapTiledJSON('tilemap', 'assets/level1v4.json');
-    }
     function despawn(despawner, despawnee)
     {
         despawnee.disableBody(true, true); //remove that object
@@ -281,280 +321,479 @@
         despawnee.disableBody(true, true); //remove that object
     }
 
-    function createSlug(x, y, type, scene) // type 0: normal, type 1: winged
-    {
-        switch(type)
+    var SceneA = new Phaser.Class({
+      Extends: Phaser.Scene,
+      initialize:
+        function SceneA()
         {
-            case 0:
-                let slug = new Slug(scene, x, y);
-                slugs.push(slug); // add to list of slugs
-                scene.physics.add.collider(slug, layer); // make slugs collide with tiles
-                break;
-            case 1:
-                let wingSlug = new WingSlug(scene, x, y);
-                slugs.push(wingSlug); // add to list of winged slugs
-                scene.physics.add.collider(wingSlug, layer);
-                break;
-            default:
-                break;
-        }
-    }
-
-    function turnRed(target)
-    {
-        target.tint = 0xff5353;
-
-        var timer = theGame.time.addEvent({
-             delay: 350,
-             callback: turnWhite,
-             args: [target],
-             callbackScope: currentScene,
-             loop: false
-         });
-    }
-
-    function turnWhite(target)
-    {
-        target.tint = 0xffffff;
-    }
-
-    // Music credit: Music by Marllon Silva (xDeviruchi)
-    /**
-    TODO: Add bullets that can hit slugs
-    TODO: Make camera follow player around the level
-    TODO: Import tileset and level
-    TODO: Win condition
-    TODO: Maybe NPCs
-    **/
-    function CollisionDamage(myPlayer, myEnemy)
-    {
-        if (!hitCooldown)
+            Phaser.Scene.call(this, {key: 'sceneA'});
+        },
+      preload:
+        function()
         {
-            turnRed(myPlayer);
-            hitCooldown = true;
-            this.time.delayedCall(500, resetHitCooldown, [], this); // Make cooldown stop in 1/2 second
-            TakeDamage(1);
-        }
-    }
-    function CollisionKill(myPlayer, myEnemy)
-    {
-        if (!hitCooldown)
+            this.load.image('sky', 'assets/bg.png');
+            this.load.image('platform', 'assets/platform.png');
+            this.load.atlas('player', 'assets/sally.png', 'assets/sally.json');
+            this.load.image('slug', 'assets/slug1.png');
+            this.load.image('wingSlug', 'assets/redslug.png');
+            this.load.image('arrow', 'assets/arrow.png');
+            this.load.image('slime', 'assets/slime.png');
+            this.load.image('tileset', 'assets/jungleTileSet.png');
+            this.load.image('spikes', 'assets/16-bit-spike-Sheet.png');
+            this.load.atlas('fox', 'assets/Fox_Sprite.png', 'assets/Fox_Sprite.json');
+            this.load.tilemapTiledJSON('tilemap', 'assets/level1v4.json');
+        },
+      create:
+        function()
         {
-            turnRed(myPlayer);
-            hitCooldown = true;
-            this.time.delayedCall(500, resetHitCooldown, [], this); // Make cooldown stop in 1/2 second
-            TakeDamage(4);
-        }
-    }
-    function CollisionDeleter(myPlayer, myEnemy)
-    {
-        if (!hitCooldown)
-        {
-            despawn(this, myEnemy);
-            hitCooldown = true;
-            this.time.delayedCall(500, resetHitCooldown, [], this); // Make cooldown stop in 1 second
-            TakeDamage(1);
-        }
-    }
+          //Set the background origin to be at (0, 0) or top left corner of the image rather than the center of the image asset
+         let background = this.add.tileSprite(0, 0, game.scale.width, game.scale.height, 'sky').setOrigin(0, 0);
+         theGame = this;
+         currentScene = this.scene;
+         //Create the layer and the player character set to collide with the layer
+         this.anims.create({key: 'player_animation', frames: this.anims.generateFrameNames('player', {prefix: 'Sal', end: 6, zeroPad: 1}), repeat: -1, frameRate: 17});
+         this.anims.create({key: 'player_idle', frames: this.anims.generateFrameNames('player', {prefix: 'Sal', end: 6, zeroPad: 1}), repeat: -1, frameRate: 0});
 
-    function create()
-    {
-        //Set the background origin to be at (0, 0) or top left corner of the image rather than the center of the image asset
-       let background = this.add.tileSprite(0, 0, game.scale.width, game.scale.height, 'sky').setOrigin(0, 0);
-       theGame = this;
-       currentScene = this.scene;
-       //Create the layer and the player character set to collide with the layer
-       this.anims.create({key: 'player_animation', frames: this.anims.generateFrameNames('player', {prefix: 'Sal', end: 6, zeroPad: 1}), repeat: -1, frameRate: 17});
-       this.anims.create({key: 'player_idle', frames: this.anims.generateFrameNames('player', {prefix: 'Sal', end: 6, zeroPad: 1}), repeat: -1, frameRate: 0});
+         player = new Player(this, 100, 50, "player", "player_animation", "player_idle");
+         player.setDepth(1);
 
-       player = new Player(this, 100, 50, "player", "player_animation", "player_idle");
-       player.setDepth(1);
+         this.physics.add.collider(slugs, slugs);
+         this.physics.add.overlap(player, slugs, CollisionDamage, null, this); // make enemies deal damage
+         this.physics.add.overlap(player, bullets, CollisionDeleter, null, this); // make enemy bullets deal damage then despawn
 
-       this.physics.add.collider(slugs, slugs);
-       this.physics.add.overlap(player, slugs, CollisionDamage, null, this); // make enemies deal damage
-       this.physics.add.overlap(player, bullets, CollisionDeleter, null, this); // make enemy bullets deal damage then despawn
-
-       map = this.make.tilemap({ key: 'tilemap'});
-        var tileset = map.addTilesetImage('jungleTileSet', 'tileset');
-        var spikeTileset = map.addTilesetImage('16-bit-spike-Sheet', 'spikes');
-        var layer = map.createLayer('Tile Layer 1', tileset, 0, 0);
-        var spikeLayer = map.createLayer('Spikes', spikeTileset, 0, 0);
-        layer.setCollisionByExclusion([-1]);
-        this.physics.add.collider(player, layer);
-        spikeLayer.setCollisionByExclusion([-1]);
-        //spikes collision
-        this.physics.add.collider(player, spikeLayer, CollisionKill, null, this);
-        layer.setScale(1.37);
-        spikeLayer.setScale(1.37);
+         map = this.make.tilemap({ key: 'tilemap'});
+          var tileset = map.addTilesetImage('jungleTileSet', 'tileset');
+          var spikeTileset = map.addTilesetImage('16-bit-spike-Sheet', 'spikes');
+          var layer = map.createLayer('Tile Layer 1', tileset, 0, 0);
+          var spikeLayer = map.createLayer('Spikes', spikeTileset, 0, 0);
+          layer.setCollisionByExclusion([-1]);
+          this.physics.add.collider(player, layer);
+          spikeLayer.setCollisionByExclusion([-1]);
+          //spikes collision
+          this.physics.add.collider(player, spikeLayer, CollisionKill, null, this);
+          layer.setScale(1.37);
+          spikeLayer.setScale(1.37);
 
 
-       this.physics.add.collider(player, layer); // make player collide with ground
-       this.physics.add.collider(bullets, layer, reverseDespawn, null, this); // make bullets despawn after hitting tiles
-       this.physics.add.collider(slugs, layer); // make slugs collide with tiles
-       this.physics.add.collider(arrows, layer, reverseDespawn, null, this); // make arrows despawn after hitting tiles
+         this.physics.add.collider(player, layer); // make player collide with ground
+         this.physics.add.collider(bullets, layer, reverseDespawn, null, this); // make bullets despawn after hitting tiles
+         this.physics.add.collider(slugs, layer); // make slugs collide with tiles
+         this.physics.add.collider(arrows, layer, reverseDespawn, null, this); // make arrows despawn after hitting tiles
 
-       createSlug(240, 530, 0, this);
-       createSlug(530, 530, 0, this);
+         createSlug(240, 530, 2, this);
+         createSlug(530, 530, 0, this);
 
-       info = this.add.text(player.x - 200, player.y + 200, '4', { font: '48px Arial', fill: '#ff0000' }); // set text location
-       info.setDepth(1);
+         info = this.add.text(player.x - 200, player.y + 200, '4', { font: '48px Arial', fill: '#ff0000' }); // set text location
+         info.setDepth(1);
 
-       //Set up user input
-       cursors = this.input.keyboard.createCursorKeys();
-       keys = this.input.keyboard.addKeys('A, D');
-       space = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
-       space.on('down', jump); //calls jump function when space is pressed
+         //Set up user input
+         cursors = this.input.keyboard.createCursorKeys();
+         keys = this.input.keyboard.addKeys('A, D');
+         space = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+         space.on('down', jump); //calls jump function when space is pressed
 
-       this.cameras.main.setBounds(0, 0, 700, 700);
-       this.cameras.main.startFollow(player, true, 0.08, 0.08);
-       this.cameras.main.setZoom(2.3);
+         this.cameras.main.setBounds(0, 0, 700, 700);
+         this.cameras.main.startFollow(player, true, 0.08, 0.08);
+         this.cameras.main.setZoom(2.3);
 
-       this.anims.create({key: 'foxally', frames: this.anims.generateFrameNames('fox', {prefix: 'Fox', end: 4, zeroPad: 1}), repeat: -1, frameRate: 8});
-       fox = new Fox(this, 210, 124, 'fox', 'foxally');
+         this.anims.create({key: 'foxally', frames: this.anims.generateFrameNames('fox', {prefix: 'Fox', end: 4, zeroPad: 1}), repeat: -1, frameRate: 8});
+         fox = new Fox(this, 210, 124, 'fox', 'foxally');
 
-       this.anims.create({key: 'foxally', frames: this.anims.generateFrameNames('fox', {prefix: 'Fox', end: 4, zeroPad: 1}), repeat: -1, frameRate: 8});
-       fox2 = new Fox(this, 126, 402, 'fox', 'foxally');
+         this.anims.create({key: 'foxally', frames: this.anims.generateFrameNames('fox', {prefix: 'Fox', end: 4, zeroPad: 1}), repeat: -1, frameRate: 8});
+         fox2 = new Fox(this, 126, 402, 'fox', 'foxally');
 
-       createSpeechBubble(125, 232, 70, 125, '“kill the slugs pls <3"', this);
-       createSpeechBubble(190, 30, 300, 70, "arrows keys to move, space to jump or double jump, up arrow to shoot <3", this);
-     }
-
-     function TakeDamage(amount)
-     {
-         turnRed(player);
-         hp -= amount;
-         info.setText(hp);
-         console.log(hp);
-
-         if (hp <= 0)
-         {
-             console.log("L");
-         }
-     }
-
-       function createSpeechBubble (x, y, width, height, quote, scene)
+         createSpeechBubble(125, 232, 70, 125, '“kill the slugs pls <3"', this);
+         createSpeechBubble(190, 30, 300, 70, "arrows keys to move, space to jump or double jump, up arrow to shoot <3", this);
+       },
+     update:
+       function()
        {
-           var bubbleWidth = width;
-           var bubbleHeight = height;
-           var bubblePadding = 10;
-           var arrowHeight = bubbleHeight / 4;
-           var bubble = scene.add.graphics({ x: x, y: y });
-           //  Bubble shadow1.9311111111121
-           bubble.fillStyle(0x222222, 0.5);
-           bubble.fillRoundedRect(6, 6, bubbleWidth, bubbleHeight, 16);
-           //  Bubble color
-           bubble.fillStyle(0xffffff, 1);
-           //  Bubble outline line style
-           bubble.lineStyle(4, 0x565656, 1);
-           //  Bubble shape and outline
-           bubble.strokeRoundedRect(0, 0, bubbleWidth, bubbleHeight, 16);
-           bubble.fillRoundedRect(0, 0, bubbleWidth, bubbleHeight, 16);
-           //  Calculate arrow coordinates
-           var point1X = Math.floor(bubbleWidth / 7);
-           var point1Y = bubbleHeight;
-           var point2X = Math.floor((bubbleWidth / 7) * 2);
-           var point2Y = bubbleHeight;
-           var point3X = Math.floor(bubbleWidth / 7);
-           var point3Y = Math.floor(bubbleHeight + arrowHeight);
-           //  Bubble arrow shadow
-           bubble.lineStyle(4, 0x222222, 0.5);
-           bubble.lineBetween(point2X - 1, point2Y + 6, point3X + 2, point3Y);
-           //  Bubble arrow fill
-           bubble.fillTriangle(point1X, point1Y, point2X, point2Y, point3X, point3Y);
-           bubble.lineStyle(2, 0x565656, 1);
-           bubble.lineBetween(point2X, point2Y, point3X, point3Y);
-           bubble.lineBetween(point1X, point1Y, point3X, point3Y);
-           var content = scene.add.text(0, 0, quote, { fontFamily: 'Arial', fontSize: 20, color: '#000000', align: 'center', wordWrap: { width: bubbleWidth - (bubblePadding * 2) } });
-           var b = content.getBounds();
-           content.setPosition(bubble.x + (bubbleWidth / 2) - (b.width / 2), bubble.y + (bubbleHeight / 2) - (b.height / 2));
-    }
-    function update()
+       //Player will not move in the x-axis unless a movement key is being pressed
+       player.setVelocityX(0);
+
+       if (player.body.onFloor())
+       {
+           currentJumps = MAX_JUMP_COUNT;
+       }
+       //Player has "drag" on the x-axis meaning they slide a bit after an input
+       player.setDragX(1000);
+       //Handle player movements
+       if (cursors.left.isDown || keys.A.isDown)
+       {
+           facingRight = false;
+           player.setFlip(false, false);
+           player.setVelocityX(-200);
+       }
+       if (cursors.right.isDown || keys.D.isDown)
+       {
+           facingRight = true;
+           player.setFlip(true, false);
+           player.setVelocityX(200);
+       }
+
+
+       if (!cursors.left.isDown && !keys.A.isDown && !cursors.right.isDown && !keys.D.isDown)
+       {
+           player.play(player.animation);
+       }
+
+       if (cooldown && player.tintBottomLeft === 0xffffff)
+       {
+           player.tint = 0xafafaf;
+       }
+       else if (!cooldown && player.tintBottomLeft === 0xafafaf)
+       {
+           player.tint = 0xffffff;
+       }
+
+
+       for (let i = 0; i < slugs.length; i++) // For each slug
+       {
+             slugs[i].pathfind(); // Make each slug move towards player
+
+
+       }
+       if (cursors.up.isDown && !cooldown)
+       {
+           cooldown = true; // Turn on arrow cooldown
+           this.time.delayedCall(700, resetCooldown, [], this); // Make cooldown stop in 1000ms
+           let offset = 30;
+           if (facingRight)
+           {
+               offset = 30;
+           }
+           else {
+               offset = -30;
+           }
+           myArrow = new Arrow(this, player.x + offset, player.y); // Spawn arrow
+           arrows.push(myArrow);
+       }
+       info.x = this.cameras.main.worldView.x + 25;
+       info.y = this.cameras.main.worldView.y + 20;
+
+       }
+   });
+
+    var SceneB = new Phaser.Class({
+     Extends: Phaser.Scene,
+     initialize:
+       function SceneB()
+       {
+           Phaser.Scene.call(this, {key: 'sceneB'});
+       },
+     create:
+       function()
+       {
+         layer = null;
+         map = null;
+         spikeLayer = null;
+         currentScene = null;
+         theGame = null;
+
+         // Gameplay Mechanics
+         hp = 4;
+         cooldown = false;
+         hitCooldown = false;
+         facingRight = true;
+         MAX_JUMP_COUNT = 2;
+         currentJumps = MAX_JUMP_COUNT;
+         // Layers
+         slugs = [];
+         arrows = [];
+         bullets = [];
+         bubbles = [];
+
+
+
+
+
+
+
+           //Set the background origin to be at (0, 0) or top left corner of the image rather than the center of the image asset
+          let background = this.add.tileSprite(0, 0, game.scale.width, game.scale.height, 'sky').setOrigin(0, 0);
+          theGame = this;
+          currentScene = this.scene;
+          //Create the layer and the player character set to collide with the layer
+          this.anims.create({key: 'player_animation', frames: this.anims.generateFrameNames('player', {prefix: 'Sal', end: 6, zeroPad: 1}), repeat: -1, frameRate: 17});
+          this.anims.create({key: 'player_idle', frames: this.anims.generateFrameNames('player', {prefix: 'Sal', end: 6, zeroPad: 1}), repeat: -1, frameRate: 0});
+
+          player = new Player(this, 100, 50, "player", "player_animation", "player_idle");
+          player.setDepth(1);
+
+
+
+          map = this.make.tilemap({ key: 'tilemap'});
+           var tileset = map.addTilesetImage('jungleTileSet', 'tileset');
+           var spikeTileset = map.addTilesetImage('16-bit-spike-Sheet', 'spikes');
+           var layer = map.createLayer('Tile Layer 1', tileset, 0, 0);
+           var spikeLayer = map.createLayer('Spikes', spikeTileset, 0, 0);
+           layer.setCollisionByExclusion([-1]);
+           this.physics.add.collider(player, layer);
+           spikeLayer.setCollisionByExclusion([-1]);
+           //spikes collision
+           this.physics.add.collider(player, spikeLayer, CollisionKill, null, this);
+           layer.setScale(1.37);
+           spikeLayer.setScale(1.37);
+
+
+          this.physics.add.collider(player, layer); // make player collide with ground
+          this.physics.add.collider(bullets, layer, reverseDespawn, null, this); // make bullets despawn after hitting tiles
+          this.physics.add.collider(slugs, layer); // make slugs collide with tiles
+          this.physics.add.collider(arrows, layer, reverseDespawn, null, this); // make arrows despawn after hitting tiles
+
+          createSlug(240, 530, 2, this);
+          createSlug(530, 530, 0, this);
+
+          this.physics.add.collider(slugs, slugs);
+          this.physics.add.overlap(player, slugs, CollisionDamage, null, this); // make enemies deal damage
+          this.physics.add.overlap(player, bullets, CollisionDeleter, null, this); // make enemy bullets deal damage then despawn
+
+          info = this.add.text(player.x - 200, player.y + 200, '4', { font: '48px Arial', fill: '#ff0000' }); // set text location
+          info.setDepth(1);
+
+          //Set up user input
+          cursors = this.input.keyboard.createCursorKeys();
+          keys = this.input.keyboard.addKeys('A, D');
+          space = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+          space.on('down', jump); //calls jump function when space is pressed
+
+          this.cameras.main.setBounds(0, 0, 700, 700);
+          this.cameras.main.startFollow(player, true, 0.08, 0.08);
+          this.cameras.main.setZoom(2.3);
+
+          this.anims.create({key: 'foxally', frames: this.anims.generateFrameNames('fox', {prefix: 'Fox', end: 4, zeroPad: 1}), repeat: -1, frameRate: 8});
+          fox = new Fox(this, 210, 124, 'fox', 'foxally');
+
+          this.anims.create({key: 'foxally', frames: this.anims.generateFrameNames('fox', {prefix: 'Fox', end: 4, zeroPad: 1}), repeat: -1, frameRate: 8});
+          fox2 = new Fox(this, 126, 402, 'fox', 'foxally');
+
+          createSpeechBubble(125, 232, 70, 125, '“kill the slugs pls <3"', this);
+          createSpeechBubble(190, 30, 300, 70, "arrows keys to move, space to jump or double jump, up arrow to shoot <3", this);
+      },
+    update:
+      function()
+      {
+      //Player will not move in the x-axis unless a movement key is being pressed
+      player.setVelocityX(0);
+
+      if (player.body.onFloor())
+      {
+          currentJumps = MAX_JUMP_COUNT;
+      }
+      //Player has "drag" on the x-axis meaning they slide a bit after an input
+      player.setDragX(1000);
+      //Handle player movements
+      if (cursors.left.isDown || keys.A.isDown)
+      {
+          facingRight = false;
+          player.setFlip(false, false);
+          player.setVelocityX(-200);
+      }
+      if (cursors.right.isDown || keys.D.isDown)
+      {
+          facingRight = true;
+          player.setFlip(true, false);
+          player.setVelocityX(200);
+      }
+
+
+      if (!cursors.left.isDown && !keys.A.isDown && !cursors.right.isDown && !keys.D.isDown)
+      {
+          player.play(player.animation);
+      }
+
+      if (cooldown && player.tintBottomLeft === 0xffffff)
+      {
+          player.tint = 0xafafaf;
+      }
+      else if (!cooldown && player.tintBottomLeft === 0xafafaf)
+      {
+          player.tint = 0xffffff;
+      }
+
+
+      for (let i = 0; i < slugs.length; i++) // For each slug
+      {
+            slugs[i].pathfind(); // Make each slug move towards player
+
+
+      }
+      if (cursors.up.isDown && !cooldown)
+      {
+          cooldown = true; // Turn on arrow cooldown
+          this.time.delayedCall(700, resetCooldown, [], this); // Make cooldown stop in 1000ms
+          let offset = 30;
+          if (facingRight)
+          {
+              offset = 30;
+          }
+          else {
+              offset = -30;
+          }
+          myArrow = new Arrow(this, player.x + offset, player.y); // Spawn arrow
+          arrows.push(myArrow);
+      }
+      info.x = this.cameras.main.worldView.x + 25;
+      info.y = this.cameras.main.worldView.y + 20;
+
+      }
+   });
+
+function createSlug(x, y, type, scene) // type 0: normal, type 1: winged
+{
+    switch(type)
     {
-        console.log(player.x + ", " + player.y);
-        //Player will not move in the x-axis unless a movement key is being pressed
-        player.setVelocityX(0);
-
-        if (player.body.onFloor())
-        {
-            currentJumps = MAX_JUMP_COUNT;
-        }
-        //Player has "drag" on the x-axis meaning they slide a bit after an input
-        player.setDragX(1000);
-        //Handle player movements
-        if (cursors.left.isDown || keys.A.isDown)
-        {
-            facingRight = false;
-            player.setFlip(false, false);
-            player.setVelocityX(-200);
-        }
-        if (cursors.right.isDown || keys.D.isDown)
-        {
-            facingRight = true;
-            player.setFlip(true, false);
-            player.setVelocityX(200);
-        }
-
-
-        if (!cursors.left.isDown && !keys.A.isDown && !cursors.right.isDown && !keys.D.isDown)
-        {
-            player.play(player.animation);
-        }
-
-        if (cooldown && player.tintBottomLeft === 0xffffff)
-        {
-            player.tint = 0xafafaf;
-        }
-        else if (!cooldown && player.tintBottomLeft === 0xafafaf)
-        {
-            player.tint = 0xffffff;
-        }
-
-
-        for (let i = 0; i < slugs.length; i++) // For each slug
-        {
-              slugs[i].pathfind(); // Make each slug move towards player
-
-
-        }
-        if (cursors.up.isDown && !cooldown)
-        {
-            cooldown = true; // Turn on arrow cooldown
-            this.time.delayedCall(700, resetCooldown, [], this); // Make cooldown stop in 1000ms
-            let offset = 30;
-            if (facingRight)
-            {
-                offset = 30;
-            }
-            else {
-                offset = -30;
-            }
-            myArrow = new Arrow(this, player.x + offset, player.y); // Spawn arrow
-            arrows.push(myArrow);
-        }
-        info.x = this.cameras.main.worldView.x + 25;
-        info.y = this.cameras.main.worldView.y + 20;
+        case 0:
+            let slug = new Slug(scene, x, y);
+            slugs.push(slug); // add to list of slugs
+            scene.physics.add.collider(slug, layer); // make slugs collide with tiles
+            break;
+        case 1:
+            let wingSlug = new WingSlug(scene, x, y);
+            slugs.push(wingSlug); // add to list of winged slugs
+            scene.physics.add.collider(wingSlug, layer);
+            break;
+        case 2:
+            let bossSlug = new BossSlug(scene, x, y);
+            slugs.push(bossSlug);
+            scene.physics.add.collider(bossSlug, layer);
+            break;
+        default:
+            break;
     }
-    function resetCooldown()
-    {
-        cooldown = false;
-    }
-    function resetHitCooldown()
-    {
-        hitCooldown = false;
-    }
-    function jump(event)
-    {
-        if (player.body.onFloor())
-        {
-            currentJumps = MAX_JUMP_COUNT - 1;
-            player.setVelocityY(-player.jumpHeight); // previously was 1100
-        }
-        else if (currentJumps > 0)
-        {
-            currentJumps--;
-            player.setVelocityY(-player.jumpHeight * 0.8);
-        }
-    }
-    </script>
+}
+function turnRed(target)
+{
+    target.tint = 0xff5353;
+
+    var timer = theGame.time.addEvent({
+         delay: 350,
+         callback: turnWhite,
+         args: [target],
+         callbackScope: currentScene,
+         loop: false
+     });
+}
+function turnWhite(target)
+{
+    target.tint = 0xffffff;
+}
+
+function CollisionDamage(myPlayer, myEnemy)
+{
+  if (!hitCooldown)
+  {
+      turnRed(myPlayer);
+      hitCooldown = true;
+      this.time.delayedCall(500, resetHitCooldown, [], this); // Make cooldown stop in 1/2 second
+      TakeDamage(1);
+  }
+}
+function CollisionKill(myPlayer, myEnemy)
+{
+  if (!hitCooldown)
+  {
+      turnRed(myPlayer);
+      hitCooldown = true;
+      this.time.delayedCall(500, resetHitCooldown, [], this); // Make cooldown stop in 1/2 second
+      TakeDamage(4);
+  }
+}
+function CollisionDeleter(myPlayer, myEnemy)
+{
+  if (!hitCooldown)
+  {
+      despawn(this, myEnemy);
+      hitCooldown = true;
+      this.time.delayedCall(500, resetHitCooldown, [], this); // Make cooldown stop in 1 second
+      TakeDamage(1);
+  }
+}
+function TakeDamage(amount)
+{
+   turnRed(player);
+   hp -= amount;
+   info.setText(hp);
+   console.log(currentScene);
+
+   if (hp <= 0 && currentScene !== SceneB)
+   {
+       currentScene.start('sceneB');
+   }
+   else if (hp <= 0)
+   {
+       currentScene.start('sceneA');
+   }
+}
+function createSpeechBubble (x, y, width, height, quote, scene)
+{
+   var bubbleWidth = width;
+   var bubbleHeight = height;
+   var bubblePadding = 10;
+   var arrowHeight = bubbleHeight / 4;
+   var bubble = scene.add.graphics({ x: x, y: y });
+   //  Bubble shadow1.9311111111121
+   bubble.fillStyle(0x222222, 0.5);
+   bubble.fillRoundedRect(6, 6, bubbleWidth, bubbleHeight, 16);
+   //  Bubble color
+   bubble.fillStyle(0xffffff, 1);
+   //  Bubble outline line style
+   bubble.lineStyle(4, 0x565656, 1);
+   //  Bubble shape and outline
+   bubble.strokeRoundedRect(0, 0, bubbleWidth, bubbleHeight, 16);
+   bubble.fillRoundedRect(0, 0, bubbleWidth, bubbleHeight, 16);
+   //  Calculate arrow coordinates
+   var point1X = Math.floor(bubbleWidth / 7);
+   var point1Y = bubbleHeight;
+   var point2X = Math.floor((bubbleWidth / 7) * 2);
+   var point2Y = bubbleHeight;
+   var point3X = Math.floor(bubbleWidth / 7);
+   var point3Y = Math.floor(bubbleHeight + arrowHeight);
+   //  Bubble arrow shadow
+   bubble.lineStyle(4, 0x222222, 0.5);
+   bubble.lineBetween(point2X - 1, point2Y + 6, point3X + 2, point3Y);
+   //  Bubble arrow fill
+   bubble.fillTriangle(point1X, point1Y, point2X, point2Y, point3X, point3Y);
+   bubble.lineStyle(2, 0x565656, 1);
+   bubble.lineBetween(point2X, point2Y, point3X, point3Y);
+   bubble.lineBetween(point1X, point1Y, point3X, point3Y);
+   var content = scene.add.text(0, 0, quote, { fontFamily: 'Arial', fontSize: 20, color: '#000000', align: 'center', wordWrap: { width: bubbleWidth - (bubblePadding * 2) } });
+   var b = content.getBounds();
+   content.setPosition(bubble.x + (bubbleWidth / 2) - (b.width / 2), bubble.y + (bubbleHeight / 2) - (b.height / 2));
+}
+function resetCooldown()
+{
+  cooldown = false;
+}
+function resetHitCooldown()
+{
+  hitCooldown = false;
+}
+function jump(event)
+{
+  if (player.body.onFloor())
+  {
+      currentJumps = MAX_JUMP_COUNT - 1;
+      player.setVelocityY(-player.jumpHeight); // previously was 1100
+  }
+  else if (currentJumps > 0)
+  {
+      currentJumps--;
+      player.setVelocityY(-player.jumpHeight * 0.8);
+  }
+}
+
+var config = {
+    type: Phaser.AUTO,
+    width: 1200,
+    height: 700,
+    physics: {
+        default: 'arcade',
+    },
+    scene: [SceneA, SceneB]
+};
+
+var game = new Phaser.Game(config);
+  </script>
 </body>
 </html>
