@@ -31,7 +31,7 @@
             this.scene.physics.add.overlap(arrows, this, this.takeDamage, null, this); // arrows hurt slugs
             scene.add.existing(this);
             scene.physics.add.existing(this);
-            this.setScale(.6);
+            this.setScale(1);
             this.setCollideWorldBounds(true);
             this.setGravityY(3000);
             this.aggressive = false;
@@ -179,23 +179,40 @@
                     callbackScope: scene,
                     loop: true
                 });
+
+                var timer2 = scene.time.addEvent({
+                     delay: 1000,
+                     callback: this.fireHoming,
+                     args: [scene, this],
+                     callbackScope: scene,
+                     loop: true
+                 });
+          }
+
+          fireHoming(myScene, obj)
+          {
+                if (obj.active)
+                {
+                    let mySlime = new SixSlime(myScene, obj.x, obj.y);
+                }
           }
 
           fire (myScene, obj)
           {
               let angle = 0;
-              for (let i = 0; i < 7; i++)
+              let amountOfBullets = 50;
+              for (let i = 0; i < amountOfBullets; i++)
               {
                   if (obj.active)
                   {
-                  angle = (360 / 7) * i;
+                  angle = (360 / amountOfBullets) * i;
                   let myVector = new Phaser.Math.Vector2();
                   myVector.x = Math.cos(angle * 3.14 / 180);
                   myVector.y = Math.sin(angle * 3.14 / 180);
-                  myVector.x += Phaser.Math.Between(-2, 2) / 9;
-                  myVector.y += Phaser.Math.Between(-2, 2) / 9;
+                  myVector.x += Phaser.Math.Between(-2, 2) / 50;
+                  myVector.y += Phaser.Math.Between(-2, 2) / 50;
                   myVector.normalize();
-                  let mySlime = new Slime(myScene, obj.x, obj.y, myVector.x * 100, myVector.y * 100);
+                  let mySlime = new Slime(myScene, obj.x, obj.y, myVector.x * 140, myVector.y * 140);
                   bullets.push(mySlime);
                   }
               }
@@ -256,6 +273,53 @@
              });
         }
     }
+    class SixSlime extends Slime
+    {
+      constructor(scene, x, y)
+      {
+          super(scene, x, y, 'sixslime');
+          slugs.push(this); // add to list of slugs
+          this.hp = 1;
+          this.scene.physics.add.overlap(arrows, this, this.takeDamage, null, this); // arrows hurt slugs
+          scene.add.existing(this);
+          scene.physics.add.existing(this);
+          this.setScale(0.007);
+          this.setCollideWorldBounds(true);
+          this.setGravityY(0);
+
+           var timer = scene.time.addEvent({
+                delay: 50,
+                callback: this.fire,
+                args: [scene, this],
+                callbackScope: scene,
+                loop: true
+            });
+      }
+      takeDamage(myArrow, me)
+      {
+          despawn(this, this);
+      }
+      pathfind()
+      {
+          if (this.x < player.x) // If slug is too far left
+          {
+              this.setVelocityX(50); // Move right
+          }
+          else if (this.x > player.x) // If slug is too far right
+          {
+              this.setVelocityX(-50); // Move left
+          }
+          if (this.y < player.y)
+          {
+              this.setVelocityY(50);
+          }
+          else if (this.y > player.y)
+          {
+              this.setVelocity(-50);
+          }
+      }
+
+    }
     class Arrow extends Phaser.Physics.Arcade.Sprite
     {
         constructor (scene, x, y)
@@ -311,6 +375,7 @@
     var arrows = [];
     var bullets = [];
     var bubbles = [];
+    var oldScene = null;
 
     function despawn(despawner, despawnee)
     {
@@ -338,14 +403,35 @@
             this.load.image('wingSlug', 'assets/redslug.png');
             this.load.image('arrow', 'assets/arrow.png');
             this.load.image('slime', 'assets/slime.png');
+            this.load.image('sixslime', 'assets/sixslime.png');
             this.load.image('tileset', 'assets/jungleTileSet.png');
             this.load.image('spikes', 'assets/16-bit-spike-Sheet.png');
             this.load.atlas('fox', 'assets/Fox_Sprite.png', 'assets/Fox_Sprite.json');
+            this.load.image('death', 'assets/death.png');
             this.load.tilemapTiledJSON('tilemap', 'assets/level1v4.json');
         },
       create:
         function()
         {
+          layer = null;
+          map = null;
+          spikeLayer = null;
+          currentScene = null;
+          theGame = null;
+
+          // Gameplay Mechanics
+          hp = 4;
+          cooldown = false;
+          hitCooldown = false;
+          facingRight = true;
+          MAX_JUMP_COUNT = 2;
+          currentJumps = MAX_JUMP_COUNT;
+          // Layers
+          slugs = [];
+          arrows = [];
+          bullets = [];
+          bubbles = [];
+
           //Set the background origin to be at (0, 0) or top left corner of the image rather than the center of the image asset
          let background = this.add.tileSprite(0, 0, game.scale.width, game.scale.height, 'sky').setOrigin(0, 0);
          theGame = this;
@@ -384,7 +470,7 @@
          this.physics.add.collider(slugs, layer); // make slugs collide with tiles
          this.physics.add.collider(arrows, layer, reverseDespawn, null, this); // make arrows despawn after hitting tiles
 
-         createSlug(240, 530, 2, this);
+         createSlug(240, 510, 2, this);
          createSlug(530, 530, 0, this);
 
          info = this.add.text(player.x - 200, player.y + 200, '4', { font: '48px Arial', fill: '#ff0000' }); // set text location
@@ -412,6 +498,7 @@
      update:
        function()
        {
+         
        //Player will not move in the x-axis unless a movement key is being pressed
        player.setVelocityX(0);
 
@@ -643,6 +730,31 @@
       }
    });
 
+   var Death = new Phaser.Class({
+    Extends: Phaser.Scene,
+    initialize:
+      function Death()
+      {
+          Phaser.Scene.call(this, {key: 'death'});
+      },
+    create:
+      function()
+      {
+         let background = this.add.tileSprite(0, 0, game.scale.width, game.scale.height, 'death').setOrigin(0, 0);
+         theGame = this;
+
+         currentScene = this.scene;
+
+         var timer = theGame.time.addEvent({
+              delay: 4000,
+              callback: LoadLevel,
+              args: [],
+              callbackScope: currentScene,
+              loop: false
+          });
+      }}
+    );
+
 function createSlug(x, y, type, scene) // type 0: normal, type 1: winged
 {
     switch(type)
@@ -713,6 +825,10 @@ function CollisionDeleter(myPlayer, myEnemy)
       TakeDamage(1);
   }
 }
+function LoadLevel(levelToLoad)
+{
+    currentScene.start(oldScene.key);
+}
 function TakeDamage(amount)
 {
    turnRed(player);
@@ -720,13 +836,10 @@ function TakeDamage(amount)
    info.setText(hp);
    console.log(currentScene);
 
-   if (hp <= 0 && currentScene !== SceneB)
+   if (hp <= 0)
    {
-       currentScene.start('sceneB');
-   }
-   else if (hp <= 0)
-   {
-       currentScene.start('sceneA');
+      oldScene = currentScene;
+      currentScene.start('death');
    }
 }
 function createSpeechBubble (x, y, width, height, quote, scene)
@@ -794,7 +907,7 @@ var config = {
     physics: {
         default: 'arcade',
     },
-    scene: [SceneA, SceneB]
+    scene: [SceneA, SceneB, Death]
 };
 
 var game = new Phaser.Game(config);
